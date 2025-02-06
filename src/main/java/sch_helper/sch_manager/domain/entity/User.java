@@ -1,9 +1,11 @@
 package sch_helper.sch_manager.domain.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import sch_helper.sch_manager.domain.Role;
 
 @Entity
+@Getter
 public class User {
 
     @Id
@@ -12,5 +14,7 @@ public class User {
 
     private String username;
     private String password;
+
+    @Enumerated(EnumType.STRING)
     private Role role;
 }

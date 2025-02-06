@@ -5,4 +5,5 @@ import sch_helper.sch_manager.domain.entity.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    User findByUsername(String username);
 }
