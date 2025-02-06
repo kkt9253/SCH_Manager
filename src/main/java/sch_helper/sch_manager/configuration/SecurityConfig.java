@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import sch_helper.sch_manager.auth.CookieUtil;
+import sch_helper.sch_manager.auth.JwtFilter;
 import sch_helper.sch_manager.auth.JwtUtil;
 import sch_helper.sch_manager.auth.LoginFilter;
 
@@ -51,6 +52,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers( "/login").permitAll()
                 .anyRequest().authenticated());
+
+        http.addFilterBefore(new JwtFilter(jwtUtil), LoginFilter.class);
 
         http.addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, cookieUtil), UsernamePasswordAuthenticationFilter.class);
 
