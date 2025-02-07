@@ -10,6 +10,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import sch_helper.sch_manager.auth.util.CookieUtil;
+import sch_helper.sch_manager.auth.util.JwtUtil;
+import sch_helper.sch_manager.auth.util.RefreshTokenHelper;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -20,6 +23,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
+    private final RefreshTokenHelper refreshTokenHelper;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -47,10 +51,11 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String accessToken = jwtUtil.createJwt("access", username, role, 10 * 60L);
         String refreshToken = jwtUtil.createJwt("refresh", username, role, 7 * 24 * 60 * 60L);
 
-        // refreshToken save 로직 필요
+        refreshTokenHelper.saveRefreshToken(refreshToken);
 
-        response.addHeader("Authorization", "Bearer " + accessToken);
+        response.setHeader("Authorization", "Bearer " + accessToken);
         response.addCookie(cookieUtil.createCookie("refresh", refreshToken, 7 * 24 * 60 * 60));
+        response.setStatus(HttpServletResponse.SC_OK);
     }
 
     @Override
