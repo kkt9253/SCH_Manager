@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import sch_helper.sch_manager.auth.util.JwtUtil;
 import sch_helper.sch_manager.domain.Role;
 import sch_helper.sch_manager.domain.entity.User;
 
@@ -35,7 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String accessToken = token.split(" ")[1];
 
-        if (jwtUtil.getExpired(accessToken)) {
+        if (jwtUtil.isExpired(accessToken)) {
 
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "access token expired");
             return;

@@ -1,4 +1,4 @@
-package sch_helper.sch_manager.auth;
+package sch_helper.sch_manager.auth.util;
 
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +34,7 @@ public class JwtUtil {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
     }
 
-    public Boolean getExpired(String token) {
+    public Boolean isExpired(String token) {
 
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
