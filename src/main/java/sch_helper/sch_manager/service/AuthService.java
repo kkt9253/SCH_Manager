@@ -43,12 +43,9 @@ public class AuthService {
 
         refreshTokenHelper.saveRefreshToken(newRefreshToken);
 
-        Date expirationDate = new Date(System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000));
-        System.out.println("Expiration Date: " + expirationDate);
-        System.out.println("여기 도달");
         response.setHeader("Authorization", "Bearer " + newAccessToken);
         response.addCookie(cookieUtil.createCookie("refresh", newRefreshToken, 7 * 24 * 60 * 60));
 
-        return ResponseEntity.ok(newAccessToken);
+        return ResponseEntity.ok("refresh success");
     }
 }
