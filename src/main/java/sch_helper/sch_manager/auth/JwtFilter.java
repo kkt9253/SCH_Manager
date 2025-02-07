@@ -1,5 +1,6 @@
 package sch_helper.sch_manager.auth;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +37,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String accessToken = token.split(" ")[1];
 
-        if (jwtUtil.isExpired(accessToken)) {
+        try {
+            jwtUtil.isExpired(accessToken);
+        } catch (ExpiredJwtException e) {
 
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "access token expired");
             return;
