@@ -1,4 +1,4 @@
-package sch_helper.sch_manager.domain.entity;
+package sch_helper.sch_manager.auth.entity;
 
 import lombok.Getter;
 import lombok.Setter;

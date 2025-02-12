@@ -1,12 +1,12 @@
-package sch_helper.sch_manager.auth;
+package sch_helper.sch_manager.auth.security;
 
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import sch_helper.sch_manager.domain.entity.User;
-import sch_helper.sch_manager.repository.UserRepository;
+import sch_helper.sch_manager.domain.user.entity.User;
+import sch_helper.sch_manager.domain.user.repository.UserRepository;
 
 @Service
 @AllArgsConstructor

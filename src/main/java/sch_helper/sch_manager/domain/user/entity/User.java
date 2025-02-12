@@ -1,10 +1,10 @@
-package sch_helper.sch_manager.domain.entity;
+package sch_helper.sch_manager.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import sch_helper.sch_manager.domain.Role;
+import sch_helper.sch_manager.domain.user.enums.Role;
 
 @Entity
 @Getter

@@ -1,9 +1,9 @@
-package sch_helper.sch_manager.auth;
+package sch_helper.sch_manager.auth.security;
 
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import sch_helper.sch_manager.domain.entity.User;
+import sch_helper.sch_manager.domain.user.entity.User;
 
 import java.util.ArrayList;
 import java.util.Collection;

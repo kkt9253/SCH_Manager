@@ -1,4 +1,4 @@
-package sch_helper.sch_manager.configuration;
+package sch_helper.sch_manager.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

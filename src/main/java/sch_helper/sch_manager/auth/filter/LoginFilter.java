@@ -1,4 +1,4 @@
-package sch_helper.sch_manager.auth;
+package sch_helper.sch_manager.auth.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import sch_helper.sch_manager.auth.security.CustomUserDetails;
 import sch_helper.sch_manager.auth.util.CookieUtil;
 import sch_helper.sch_manager.auth.util.JwtUtil;
 import sch_helper.sch_manager.auth.util.RefreshTokenHelper;

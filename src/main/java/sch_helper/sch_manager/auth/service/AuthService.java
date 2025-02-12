@@ -1,4 +1,4 @@
-package sch_helper.sch_manager.service;
+package sch_helper.sch_manager.auth.service;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;

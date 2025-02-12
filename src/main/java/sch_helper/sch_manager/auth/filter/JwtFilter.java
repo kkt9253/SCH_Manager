@@ -1,4 +1,4 @@
-package sch_helper.sch_manager.auth;
+package sch_helper.sch_manager.auth.filter;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -11,9 +11,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import sch_helper.sch_manager.auth.security.CustomUserDetails;
 import sch_helper.sch_manager.auth.util.JwtUtil;
-import sch_helper.sch_manager.domain.Role;
-import sch_helper.sch_manager.domain.entity.User;
+import sch_helper.sch_manager.domain.user.enums.Role;
+import sch_helper.sch_manager.domain.user.entity.User;
 
 import java.io.IOException;
 import java.io.PrintWriter;

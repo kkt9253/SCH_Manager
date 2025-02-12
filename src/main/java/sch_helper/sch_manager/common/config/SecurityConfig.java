@@ -1,6 +1,5 @@
-package sch_helper.sch_manager.configuration;
+package sch_helper.sch_manager.common.config;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,11 +12,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
-import sch_helper.sch_manager.auth.CustomLogoutFilter;
+import sch_helper.sch_manager.auth.filter.CustomLogoutFilter;
+import sch_helper.sch_manager.auth.security.CustomAccessDeniedHandler;
+import sch_helper.sch_manager.auth.security.CustomAuthenticationEntryPoint;
 import sch_helper.sch_manager.auth.util.CookieUtil;
-import sch_helper.sch_manager.auth.JwtFilter;
+import sch_helper.sch_manager.auth.filter.JwtFilter;
 import sch_helper.sch_manager.auth.util.JwtUtil;
-import sch_helper.sch_manager.auth.LoginFilter;
+import sch_helper.sch_manager.auth.filter.LoginFilter;
 import sch_helper.sch_manager.auth.util.RefreshTokenHelper;
 
 @Configuration
@@ -29,6 +30,8 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
     private final RefreshTokenHelper refreshTokenHelper;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -66,6 +69,10 @@ public class SecurityConfig {
         http.addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, cookieUtil, refreshTokenHelper), UsernamePasswordAuthenticationFilter.class);
 
         http.addFilterAfter(new JwtFilter(jwtUtil), LoginFilter.class);
+
+        http.exceptionHandling(e -> e
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler));
 
         http.sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));

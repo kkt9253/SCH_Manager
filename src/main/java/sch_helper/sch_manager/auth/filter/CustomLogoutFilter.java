@@ -1,4 +1,4 @@
-package sch_helper.sch_manager.auth;
+package sch_helper.sch_manager.auth.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

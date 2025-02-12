@@ -1,4 +1,4 @@
-package sch_helper.sch_manager.domain;
+package sch_helper.sch_manager.domain.user.enums;
 
 public enum Role {
 
