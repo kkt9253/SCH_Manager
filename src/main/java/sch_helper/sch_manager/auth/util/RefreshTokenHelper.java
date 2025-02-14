@@ -3,6 +3,8 @@ package sch_helper.sch_manager.auth.util;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import sch_helper.sch_manager.common.exception.custom.JwtAuthenticationException;
+import sch_helper.sch_manager.common.exception.error.ErrorCode;
 
 import java.util.concurrent.TimeUnit;
 
@@ -16,20 +18,14 @@ public class RefreshTokenHelper {
 
     public void validateRefreshToken(String refreshToken) {
 
-        if (refreshToken == null) {
-
-            throw new IllegalStateException("refresh token is null");
-        }
-
-        if (jwtUtil.isExpired(refreshToken)) {
-
-            throw new IllegalStateException("refresh token has expired");
-        }
-
+        jwtUtil.validateToken(refreshToken);
         String category = jwtUtil.getCategory(refreshToken);
-        if (!category.equals("refresh")) {
+        if (!"refresh".equals(category)) {
+            throw new JwtAuthenticationException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
 
-            throw new IllegalStateException("Invalid refresh token category");
+        if (!isExistRefreshToken(refreshToken)) {
+            throw new JwtAuthenticationException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
     }
 
