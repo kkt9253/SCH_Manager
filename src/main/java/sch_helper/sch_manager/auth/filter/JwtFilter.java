@@ -1,6 +1,6 @@
 package sch_helper.sch_manager.auth.filter;
 
-import io.jsonwebtoken.ExpiredJwtException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +17,6 @@ import sch_helper.sch_manager.domain.user.enums.Role;
 import sch_helper.sch_manager.domain.user.entity.User;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 @Component
 @AllArgsConstructor
@@ -38,19 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String accessToken = token.split(" ")[1];
 
-        try {
-            jwtUtil.isExpired(accessToken);
-        } catch (ExpiredJwtException e) {
-
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "access token expired");
-            return;
-        }
-
-        if (!("access").equals(jwtUtil.getCategory(accessToken))) {
-
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "invalid access token");
-            return;
-        }
+        jwtUtil.validateToken(accessToken);
 
         String username = jwtUtil.getUserName(accessToken);
         String role = jwtUtil.getRole(accessToken);
@@ -65,12 +52,5 @@ public class JwtFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
-    }
-
-    private void sendErrorResponse(HttpServletResponse response, int status, String msg) throws IOException {
-
-        PrintWriter writer = response.getWriter();
-        writer.print(msg);
-        response.setStatus(status);
     }
 }
