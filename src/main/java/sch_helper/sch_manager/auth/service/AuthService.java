@@ -1,6 +1,5 @@
 package sch_helper.sch_manager.auth.service;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -9,8 +8,7 @@ import org.springframework.stereotype.Service;
 import sch_helper.sch_manager.auth.util.CookieUtil;
 import sch_helper.sch_manager.auth.util.JwtUtil;
 import sch_helper.sch_manager.auth.util.RefreshTokenHelper;
-
-import java.util.Date;
+import sch_helper.sch_manager.common.response.SuccessResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -24,16 +22,7 @@ public class AuthService {
 
         String refreshToken = cookieUtil.getCookieValue(request, "refresh");
 
-        try {
-            refreshTokenHelper.validateRefreshToken(refreshToken);
-        } catch (ExpiredJwtException e) {
-            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body(e.getMessage());
-        }
-
-        if (!refreshTokenHelper.isExistRefreshToken(refreshToken)) {
-
-            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body("Invalid refresh token");
-        }
+        refreshTokenHelper.validateRefreshToken(refreshToken);
 
         String username = jwtUtil.getUserName(refreshToken);
         String role = jwtUtil.getRole(refreshToken);
@@ -46,6 +35,6 @@ public class AuthService {
         response.setHeader("Authorization", "Bearer " + newAccessToken);
         response.addCookie(cookieUtil.createCookie("refresh", newRefreshToken, 7 * 24 * 60 * 60));
 
-        return ResponseEntity.ok("refresh success");
+        return ResponseEntity.ok(SuccessResponse.of("Access token reissued"));
     }
 }

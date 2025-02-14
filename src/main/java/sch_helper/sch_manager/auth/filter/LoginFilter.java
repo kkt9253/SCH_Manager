@@ -1,5 +1,6 @@
 package sch_helper.sch_manager.auth.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +15,9 @@ import sch_helper.sch_manager.auth.security.CustomUserDetails;
 import sch_helper.sch_manager.auth.util.CookieUtil;
 import sch_helper.sch_manager.auth.util.JwtUtil;
 import sch_helper.sch_manager.auth.util.RefreshTokenHelper;
+import sch_helper.sch_manager.common.response.SuccessResponse;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -25,6 +28,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
     private final RefreshTokenHelper refreshTokenHelper;
+    private final ObjectMapper objectMapper;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -38,7 +42,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     }
 
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) {
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException {
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
@@ -56,6 +60,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         response.setHeader("Authorization", "Bearer " + accessToken);
         response.addCookie(cookieUtil.createCookie("refresh", refreshToken, 7 * 24 * 60 * 60));
+
+        String responseBody = objectMapper.writeValueAsString(SuccessResponse.of("login success"));
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(responseBody);
+
         response.setStatus(HttpServletResponse.SC_OK);
     }
 
