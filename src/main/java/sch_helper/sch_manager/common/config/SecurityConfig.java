@@ -1,5 +1,6 @@
 package sch_helper.sch_manager.common.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import sch_helper.sch_manager.auth.filter.CustomLogoutFilter;
+import sch_helper.sch_manager.auth.filter.JwtExceptionFilter;
 import sch_helper.sch_manager.auth.security.CustomAccessDeniedHandler;
 import sch_helper.sch_manager.auth.security.CustomAuthenticationEntryPoint;
 import sch_helper.sch_manager.auth.util.CookieUtil;
@@ -32,6 +34,7 @@ public class SecurityConfig {
     private final RefreshTokenHelper refreshTokenHelper;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -64,9 +67,11 @@ public class SecurityConfig {
                 .requestMatchers( "/login", "/reissue").permitAll()
                 .anyRequest().authenticated());
 
-        http.addFilterAt(new CustomLogoutFilter(refreshTokenHelper, cookieUtil), LogoutFilter.class);
+        http.addFilterBefore(new JwtExceptionFilter(objectMapper), LogoutFilter.class);
 
-        http.addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, cookieUtil, refreshTokenHelper), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAt(new CustomLogoutFilter(refreshTokenHelper, cookieUtil, jwtUtil, objectMapper), LogoutFilter.class);
+
+        http.addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, cookieUtil, refreshTokenHelper, objectMapper), UsernamePasswordAuthenticationFilter.class);
 
         http.addFilterAfter(new JwtFilter(jwtUtil), LoginFilter.class);
 
