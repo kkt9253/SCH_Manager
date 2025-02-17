@@ -77,7 +77,7 @@ public class JwtUtil {
             throw new JwtAuthenticationException(ErrorCode.JWT_SIGNATURE_INVALID);
         } catch (AuthenticationException e) {
             System.out.println("Invalid JWT token AuthenticationException");
-            throw new JwtAuthenticationException(ErrorCode.UNAUTHORIZED_ERROR);
+            throw new JwtAuthenticationException(ErrorCode.UNAUTHORIZED);
         } catch (IllegalArgumentException e) {
             System.out.println("JWT token not provided");
             throw new JwtAuthenticationException(ErrorCode.TOKEN_NOT_PROVIDED);
