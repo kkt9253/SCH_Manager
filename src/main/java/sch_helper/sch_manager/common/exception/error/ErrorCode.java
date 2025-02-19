@@ -10,9 +10,8 @@ public enum ErrorCode {
 
     /** ========== 400 BAD_REQUEST (잘못된 요청) ========== **/
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "B001", "잘못된 요청입니다."),
-    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "B002", "입력값이 유효하지 않습니다."),
-    INVALID_FORMAT(HttpStatus.BAD_REQUEST, "B003", "입력 형식이 올바르지 않습니다."),
-    DATE_DAY_MISMATCH(HttpStatus.BAD_REQUEST, "B004", "요청한 날짜와 요일이 일치하지 않습니다."),
+    INVALID_REQUEST_DATA(HttpStatus.BAD_REQUEST, "B002", "요청 데이터가 올바르지 않습니다."),
+    DATE_DAY_MISMATCH(HttpStatus.BAD_REQUEST, "B003", "요청한 날짜와 요일이 일치하지 않습니다."),
 
     /** ========== 401 UNAUTHORIZED (인증 오류) ========== **/
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A001", "인증이 필요합니다."),
@@ -46,7 +45,7 @@ public enum ErrorCode {
 
     /** ========== 500 INTERNAL_SERVER_ERROR (서버 오류) ========== **/
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "서버 내부 오류가 발생했습니다."),
-    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S002", "파일 업로드에 실패했습니다."),
+    UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S002", "업로드에 실패했습니다."),
     DATABASE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S003", "데이터베이스 오류가 발생했습니다."),
     UNEXPECTED_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S004", "예상치 못한 오류가 발생했습니다.");
 
