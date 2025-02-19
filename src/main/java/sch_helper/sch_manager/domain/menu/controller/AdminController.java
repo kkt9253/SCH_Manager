@@ -15,14 +15,14 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/admin")
 public class AdminController {
 
     private final AdminService adminService;
     private final DateUtil dateUtil;
 
-    @PostMapping("/admin1/week-meal-plans/{restaurant-name}")
-    public ResponseEntity<?> uploadAdmin1WeekMealPlans(
+    @PostMapping("/week-meal-plans/{restaurant-name}")
+    public ResponseEntity<?> uploadWeekMealPlans(
             @PathVariable(name = "restaurant-name") String restaurantName,
             @RequestPart("weekStartDate") String weekStartDate,
             @RequestPart(value = "dailyMeals", required = false) List<DailyMealDTO> dailyMealDTOS,
@@ -36,10 +36,14 @@ public class AdminController {
 
         // 폼 형식 안맞췄을 때 예외처리 필요
         if (!dateUtil.isSameDayOfWeek(weekStartDate, DayOfWeek.MONDAY)) {
-            System.out.println("exex1");
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
 
+        // 식당과 사용자의 권한을 비교하여 동일하지 않으면 예외처리
         return adminService.uploadAdmin1WeekMealPlans(restaurantName, weekStartDate, dailyMealDTOS, weeklyMealImg);
     }
+
+
+
+
 }
