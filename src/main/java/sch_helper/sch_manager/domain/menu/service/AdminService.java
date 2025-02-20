@@ -15,7 +15,6 @@ import sch_helper.sch_manager.domain.menu.dto.base.DailyMealDTO;
 import sch_helper.sch_manager.domain.menu.entity.Restaurant;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
 import sch_helper.sch_manager.domain.menu.repository.RestaurantRepository;
-import sch_helper.sch_manager.domain.user.enums.Role;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,7 +29,7 @@ public class AdminService {
     private final MenuUtil menuUtil;
 
 
-    public ResponseEntity<?> uploadAdmin1WeekMealPlans(
+    public ResponseEntity<?> uploadAdminWeeklyMealPlans(
             String restaurantName,
             String weekStartDate,
             List<DailyMealDTO> dailyMealDTOS,
@@ -40,7 +39,7 @@ public class AdminService {
         String savedImgPath = null;
         try {
 
-            String fileName = weekStartDate + "-week.jpg";
+            String fileName = restaurantName + "-" + weekStartDate + "-week.jpg";
             savedImgPath = fileUtil.saveFile(weeklyMealImg, "weeklyMealImg", fileName);
 
             Restaurant restaurant = restaurantRepository.findByName(restaurantName)
@@ -66,15 +65,51 @@ public class AdminService {
         ));
     }
 
+    public ResponseEntity<?> uploadAdminDailyMealPlans(
+            String restaurantName,
+            String weekStartDate,
+            DailyMealDTO dailyMealDTO,
+            MultipartFile dailyMealImg
+    ) {
+
+        String savedImgPath = null;
+        try {
+
+            String fileName = restaurantName + "-" + weekStartDate + "-day.jpg";
+            savedImgPath = fileUtil.saveFile(dailyMealImg, "dailyMealImg", fileName);
+
+            Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+                    .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+            if (dailyMealDTO != null) {
+
+                String jsonDailyMealDTO = objectMapper.writeValueAsString(dailyMealDTO);
+                System.out.println("jsonDailyMealDTO => \n" + jsonDailyMealDTO);
+
+                menuUtil.saveDailyMeal(restaurant, dailyMealDTO, MenuStatus.PENDING);
+            }
+        } catch (IOException e) {
+            throw new ApiException(ErrorCode.UPLOAD_FAILED);
+        }
+
+        return ResponseEntity.ok(SuccessResponse.of(
+                HttpStatus.CREATED,
+                "daily meal plans uploaded successfully.",
+                savedImgPath
+        ));
+    }
 
 
-
+//    public ResponseEntity<?> getAdminDayMealPlans() {
+//
+//
+//    }
 }
 
 
 /*
-{
-    "dailyMeals": [
+[
+        "weekStartDate": "2025-02-17",
         {
             "dayOfWeek": "MONDAY",
             "meals": [
@@ -113,6 +148,5 @@ public class AdminService {
                 }
             ]
         }
-    ]
-}
+]
 */
