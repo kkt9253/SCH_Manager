@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,6 +23,7 @@ import sch_helper.sch_manager.auth.filter.JwtFilter;
 import sch_helper.sch_manager.auth.util.JwtUtil;
 import sch_helper.sch_manager.auth.filter.LoginFilter;
 import sch_helper.sch_manager.auth.util.RefreshTokenHelper;
+import sch_helper.sch_manager.domain.user.enums.Role;
 
 @Configuration
 @EnableWebSecurity
@@ -64,7 +66,14 @@ public class SecurityConfig {
                 .disable());
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers( "/login", "/reissue").permitAll()
+                .requestMatchers( HttpMethod.POST, "/login", "/reissue").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/admin/week-meal-plans/hyangseol1").hasAnyAuthority(Role.Master.name(), Role.Admin1.name(), Role.Admin2.name())
+                .requestMatchers(HttpMethod.POST, "/api/admin/week-meal-plans/faculty").hasAnyAuthority(Role.Master.name(), Role.Admin1.name(), Role.Admin3.name())
+                .requestMatchers(HttpMethod.POST, "/api/admin/meal-plans/hyangseol1").hasAnyAuthority(Role.Master.name(), Role.Admin1.name(), Role.Admin2.name())
+                .requestMatchers(HttpMethod.POST, "/api/admin/meal-plans/faculty").hasAnyAuthority(Role.Master.name(), Role.Admin1.name(), Role.Admin3.name())
+                .requestMatchers(HttpMethod.POST, "/api/master/meal-plans/hyangseol1").hasAnyAuthority(Role.Master.name())
+                .requestMatchers(HttpMethod.POST, "/api/master/meal-plans/faculty").hasAnyAuthority(Role.Master.name())
+                // 추가된 GET - api 설정해야 함 (근데 설정하기 애매해서 고민 중)
                 .anyRequest().authenticated());
 
         http.addFilterBefore(new JwtExceptionFilter(objectMapper), LogoutFilter.class);

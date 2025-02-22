@@ -1,5 +1,6 @@
 package sch_helper.sch_manager.domain.menu.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,9 +12,17 @@ import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.common.response.SuccessResponse;
 import sch_helper.sch_manager.common.util.FileUtil;
 import sch_helper.sch_manager.common.util.MenuUtil;
-import sch_helper.sch_manager.domain.menu.dto.base.DailyMealDTO;
+import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealRequestDTO;
+import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealResponseDTO;
+import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
+import sch_helper.sch_manager.domain.menu.dto.base.DailyMealResponseDTO;
+import sch_helper.sch_manager.domain.menu.dto.base.MealResponseDTO;
+import sch_helper.sch_manager.domain.menu.dto.converter.MenuConverter;
+import sch_helper.sch_manager.domain.menu.entity.Menu;
 import sch_helper.sch_manager.domain.menu.entity.Restaurant;
+import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
+import sch_helper.sch_manager.domain.menu.repository.MenuQueryDslRepository;
 import sch_helper.sch_manager.domain.menu.repository.RestaurantRepository;
 
 import java.io.IOException;
@@ -27,12 +36,13 @@ public class AdminService {
     private final FileUtil fileUtil;
     private final ObjectMapper objectMapper;
     private final MenuUtil menuUtil;
+    private final MenuQueryDslRepository menuQueryDslRepository;
 
 
-    public ResponseEntity<?> uploadAdminWeeklyMealPlans(
+    public ResponseEntity<?> uploadWeeklyMealPlans(
             String restaurantName,
             String weekStartDate,
-            List<DailyMealDTO> dailyMealDTOS,
+            List<DailyMealRequestDTO> dailyMealRequestDTOS,
             MultipartFile weeklyMealImg
     ) {
 
@@ -45,13 +55,13 @@ public class AdminService {
             Restaurant restaurant = restaurantRepository.findByName(restaurantName)
                     .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-            if (dailyMealDTOS != null) {
-                for (DailyMealDTO dailyMealDTO : dailyMealDTOS) {
+            if (dailyMealRequestDTOS != null) {
+                for (DailyMealRequestDTO dailyMealRequestDTO : dailyMealRequestDTOS) {
 
-                    String jsonDailyMealDTO = objectMapper.writeValueAsString(dailyMealDTO);
+                    String jsonDailyMealDTO = objectMapper.writeValueAsString(dailyMealRequestDTO);
                     System.out.println("jsonDailyMealDTO => \n" + jsonDailyMealDTO);
 
-                    menuUtil.saveDailyMeal(restaurant, dailyMealDTO, MenuStatus.PENDING);
+                    menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING);
                 }
             }
         } catch (IOException e) {
@@ -65,10 +75,11 @@ public class AdminService {
         ));
     }
 
-    public ResponseEntity<?> uploadAdminDailyMealPlans(
+
+    public ResponseEntity<?> uploadDailyMealPlans(
             String restaurantName,
             String weekStartDate,
-            DailyMealDTO dailyMealDTO,
+            DailyMealRequestDTO dailyMealRequestDTO,
             MultipartFile dailyMealImg
     ) {
 
@@ -81,12 +92,12 @@ public class AdminService {
             Restaurant restaurant = restaurantRepository.findByName(restaurantName)
                     .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-            if (dailyMealDTO != null) {
+            if (dailyMealRequestDTO != null) {
 
-                String jsonDailyMealDTO = objectMapper.writeValueAsString(dailyMealDTO);
+                String jsonDailyMealDTO = objectMapper.writeValueAsString(dailyMealRequestDTO);
                 System.out.println("jsonDailyMealDTO => \n" + jsonDailyMealDTO);
 
-                menuUtil.saveDailyMeal(restaurant, dailyMealDTO, MenuStatus.PENDING);
+                menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING);
             }
         } catch (IOException e) {
             throw new ApiException(ErrorCode.UPLOAD_FAILED);
@@ -100,12 +111,44 @@ public class AdminService {
     }
 
 
-//    public ResponseEntity<?> getAdminDayMealPlans() {
-//
-//
-//    }
-}
+    public ResponseEntity<?> getPendingDailyMealPlans(PendingDailyMealRequestDTO pendingDailyMealRequestDTO) {
 
+        List<Menu> menus = menuQueryDslRepository.getDailyMealByMenuStatus(
+                pendingDailyMealRequestDTO.getRestaurantName(),
+                DayOfWeek.valueOf(pendingDailyMealRequestDTO.getDayOfWeek()),
+                MenuStatus.PENDING
+        );
+
+        List<MealResponseDTO> MealResponseDTOs = MenuConverter.toMealResponseDTOs(menus);
+
+        String dayOfWeek = pendingDailyMealRequestDTO.getDayOfWeek();
+        String restaurantName = pendingDailyMealRequestDTO.getRestaurantName();
+        String weekStartDate = pendingDailyMealRequestDTO.getWeekStartDate().toString();
+
+        String dayFileName = restaurantName + "-" + weekStartDate + "-day.jpg";
+        String weekFileName = restaurantName + "-" + weekStartDate + "-week.jpg";
+
+        String dayMealImgPath = fileUtil.getFile("dailyMealImg", dayFileName);
+        String weekMealImgPath = fileUtil.getFile("weeklyMealImg", weekFileName);
+
+        // 이미지 경로가 아닌 이미지 보내는 걸로 수정 예정
+        PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
+                dayMealImgPath,
+                weekMealImgPath,
+                new DailyMealResponseDTO(dayOfWeek, MealResponseDTOs)
+        );
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            System.out.println("jsonMealResponseDTOs => \n" + objectMapper.writeValueAsString(MealResponseDTOs));
+            System.out.println("pendingDailyMealResponseDTO => \n" + objectMapper.writeValueAsString(pendingDailyMealResponseDTO));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return ResponseEntity.ok(SuccessResponse.ok(pendingDailyMealResponseDTO));
+    }
+}
 
 /*
 [

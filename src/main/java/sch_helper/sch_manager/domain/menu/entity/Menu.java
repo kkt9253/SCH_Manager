@@ -1,6 +1,7 @@
 package sch_helper.sch_manager.domain.menu.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
@@ -8,6 +9,7 @@ import sch_helper.sch_manager.domain.menu.enums.MealType;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
 
 @Entity
+@Getter
 @Setter
 @NoArgsConstructor
 public class Menu {
