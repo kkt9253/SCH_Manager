@@ -52,7 +52,7 @@ public class CustomLogoutFilter extends GenericFilterBean {
         Cookie cookie = cookieUtil.createCookie("refresh", null, 0);
         response.addCookie(cookie);
 
-        String responseBody = objectMapper.writeValueAsString(SuccessResponse.of("logout success"));
+        String responseBody = objectMapper.writeValueAsString(SuccessResponse.ok("logout success"));
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(responseBody);

@@ -35,6 +35,6 @@ public class AuthService {
         response.setHeader("Authorization", "Bearer " + newAccessToken);
         response.addCookie(cookieUtil.createCookie("refresh", newRefreshToken, 7 * 24 * 60 * 60));
 
-        return ResponseEntity.ok(SuccessResponse.of("Access token reissued"));
+        return ResponseEntity.ok(SuccessResponse.ok("Access token reissued"));
     }
 }

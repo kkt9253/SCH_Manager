@@ -15,7 +15,7 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor
-public class DailyMealDTO {
+public class DailyMealRequestDTO {
 
     @NotBlank(message = "dayOfWeek은 필수 값입니다.")
     @Pattern(regexp = "^(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY)$", message = "유효한 요일을 입력해야 합니다.")
@@ -24,7 +24,7 @@ public class DailyMealDTO {
     @JsonProperty("meals")
     @NotNull(message = "meals 리스트는 최소 1개 이상 필요합니다.")
     @Size(min = 1, message = "meals 리스트는 최소 1개 이상이어야 합니다.")
-    private List<@Valid MealDTO> meals;
+    private List<@Valid MealRequestDTO> meals;
 
     public DayOfWeek getDayOfWeekEnum() {
         return DayOfWeek.valueOf(this.dayOfWeek);

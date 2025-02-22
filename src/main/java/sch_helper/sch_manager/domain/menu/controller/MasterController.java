@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import sch_helper.sch_manager.common.exception.custom.ApiException;
 import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.common.util.DateUtil;
-import sch_helper.sch_manager.domain.menu.dto.base.DailyMealDTO;
+import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.service.MasterService;
 
 import java.time.DayOfWeek;
@@ -24,17 +24,17 @@ public class MasterController {
     public ResponseEntity<?> uploadDailyMealPlans(
             @PathVariable(name = "restaurant-name") String restaurantName,
             @RequestPart("weekStartDate") String weekStartDate,
-            @RequestPart(value = "dailyMeals") @Valid DailyMealDTO dailyMealDTO
+            @RequestPart(value = "dailyMeals") @Valid DailyMealRequestDTO dailyMealRequestDTO
     ) {
 
         System.out.println("restaurantName: " + restaurantName);
         System.out.println("weekStartDate: " + weekStartDate);
-        System.out.println("dailyMealDTO: " + dailyMealDTO);
+        System.out.println("dailyMealDTO: " + dailyMealRequestDTO);
 
         if (!dateUtil.isSameDayOfWeek(weekStartDate, DayOfWeek.MONDAY)) {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
 
-        return masterService.uploadMasterDailyMealPlans(restaurantName, dailyMealDTO);
+        return masterService.uploadMasterDailyMealPlans(restaurantName, dailyMealRequestDTO);
     }
 }

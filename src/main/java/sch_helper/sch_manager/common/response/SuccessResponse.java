@@ -22,11 +22,7 @@ public class SuccessResponse<T> {
         return new SuccessResponse<>(status, message, null);
     }
 
-    public static <T> SuccessResponse<T> of(HttpStatus status) {
-        return new SuccessResponse<>(status, "Success", null);
-    }
-
-    public static <T> SuccessResponse<T> of(String message) {
+    public static <T> SuccessResponse<T> ok(String message) {
         return new SuccessResponse<>(HttpStatus.OK, message, null);
     }
 

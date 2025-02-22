@@ -61,7 +61,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setHeader("Authorization", "Bearer " + accessToken);
         response.addCookie(cookieUtil.createCookie("refresh", refreshToken, 7 * 24 * 60 * 60));
 
-        String responseBody = objectMapper.writeValueAsString(SuccessResponse.of("login success"));
+        String responseBody = objectMapper.writeValueAsString(SuccessResponse.ok("login success"));
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(responseBody);
