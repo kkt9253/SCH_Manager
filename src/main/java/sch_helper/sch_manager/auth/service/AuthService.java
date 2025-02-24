@@ -27,7 +27,7 @@ public class AuthService {
         String username = jwtUtil.getUserName(refreshToken);
         String role = jwtUtil.getRole(refreshToken);
 
-        String newAccessToken = jwtUtil.createJwt("access", username, role, 10 * 60L);
+        String newAccessToken = jwtUtil.createJwt("access", username, role, 24 * 60 * 60L); // 10 * 60L
         String newRefreshToken = jwtUtil.createJwt("refresh", username, role, 7 * 24 * 60 * 60L);
 
         refreshTokenHelper.saveRefreshToken(newRefreshToken);

@@ -26,7 +26,7 @@ public class DailyMealRequestDTO {
     @Size(min = 1, message = "meals 리스트는 최소 1개 이상이어야 합니다.")
     private List<@Valid MealRequestDTO> meals;
 
-    public DayOfWeek getDayOfWeekEnum() {
-        return DayOfWeek.valueOf(this.dayOfWeek);
-    }
+//    public DayOfWeek getDayOfWeekEnum() {
+//        return DayOfWeek.valueOf(this.dayOfWeek);
+//    }
 }

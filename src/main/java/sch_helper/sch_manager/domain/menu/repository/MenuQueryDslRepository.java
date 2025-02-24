@@ -9,4 +9,6 @@ import java.util.List;
 public interface MenuQueryDslRepository {
 
     List<Menu> getDailyMealByMenuStatus(String restaurantName, DayOfWeek dayOfWeek, MenuStatus menuStatus);
+
+    List<Menu> getWeeklyMealByMenuStatus(String restaurantName, MenuStatus menuStatus);
 }
