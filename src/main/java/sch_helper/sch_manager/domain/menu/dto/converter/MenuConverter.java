@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class MenuConverter {
 
-    public static List<MealResponseDTO> toMealResponseDTOs(List<Menu> menus) {
+    public static List<MealResponseDTO> getMealResponseDTOsByMenus(List<Menu> menus) {
 
         return menus.stream()
                 .map(MealResponseDTO::fromEntity)

@@ -22,7 +22,7 @@ public class MenuUtil {
 
     public void saveDailyMeal(Restaurant restaurant, DailyMealRequestDTO dailyMealRequestDTO, MenuStatus menuStatus) {
 
-        DayOfWeek dayOfWeek = dailyMealRequestDTO.getDayOfWeekEnum();
+        DayOfWeek dayOfWeek = DayOfWeek.valueOf(dailyMealRequestDTO.getDayOfWeek());
 
         for (MealRequestDTO mealRequestDTO : dailyMealRequestDTO.getMeals()) {
 

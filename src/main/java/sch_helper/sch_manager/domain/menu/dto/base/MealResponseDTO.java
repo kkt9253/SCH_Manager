@@ -11,7 +11,7 @@ import sch_helper.sch_manager.domain.menu.enums.MealType;
 @AllArgsConstructor
 public class MealResponseDTO {
 
-    private MealType mealType;
+    private String mealType;
     private String operatingStartTime;
     private String operatingEndTime;
     private String mainMenu;
@@ -20,7 +20,7 @@ public class MealResponseDTO {
     public static MealResponseDTO fromEntity(Menu menu) {
 
         return new MealResponseDTO(
-                menu.getMealType(),
+                menu.getMealType().toString(),
                 menu.getOperatingStartTime(),
                 menu.getOperatingEndTime(),
                 menu.getMainMenu(),

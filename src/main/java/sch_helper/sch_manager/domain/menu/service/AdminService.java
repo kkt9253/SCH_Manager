@@ -21,11 +21,14 @@ import sch_helper.sch_manager.domain.menu.dto.converter.MenuConverter;
 import sch_helper.sch_manager.domain.menu.entity.Menu;
 import sch_helper.sch_manager.domain.menu.entity.Restaurant;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
+import sch_helper.sch_manager.domain.menu.enums.MealType;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
 import sch_helper.sch_manager.domain.menu.repository.RestaurantRepository;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,10 +64,32 @@ public class AdminService {
             throw new ApiException(ErrorCode.UPLOAD_FAILED);
         }
 
+        // get에서 했듯이 쿼리문으로 가져온 menu 정보를 반환할지, 사용자로부터 받은 데이터로부터 반환할지
+        // 쿼리문으로 사용 안한 이유는 성능상 아래처럼 하는게 더 빠르다고 생각해서 (물론 사용자 얼마 없어서 성능에 의미 없을거 같긴 함)
+        List<DailyMealResponseDTO> dailyMealResponseDTOS = dailyMealRequestDTOS.stream()
+                .map(dailyMealRequestDTO -> new DailyMealResponseDTO(
+                        dailyMealRequestDTO.getDayOfWeek(),
+                        dailyMealRequestDTO.getMeals().stream()
+                                .map(mealRequestDTO -> new MealResponseDTO(
+                                        mealRequestDTO.getMealType(),
+                                        mealRequestDTO.getOperatingStartTime(),
+                                        mealRequestDTO.getOperatingEndTime(),
+                                        mealRequestDTO.getMainMenu(),
+                                        mealRequestDTO.getSubMenu()
+                                ))
+                                .toList()
+                ))
+                .toList();
+
+        PendingWeeklyMealResponseDTO response = new PendingWeeklyMealResponseDTO(
+                savedImgPath,
+                dailyMealResponseDTOS
+        );
+
         return ResponseEntity.ok(SuccessResponse.of(
                 HttpStatus.CREATED,
                 "Weekly meal plans uploaded successfully.",
-                savedImgPath
+                response
         ));
     }
 
@@ -93,10 +118,27 @@ public class AdminService {
             throw new ApiException(ErrorCode.UPLOAD_FAILED);
         }
 
+        PendingDailyMealResponseDTO response = new PendingDailyMealResponseDTO(
+                savedImgPath,
+                null,
+                new DailyMealResponseDTO(
+                        dailyMealRequestDTO.getDayOfWeek(),
+                        dailyMealRequestDTO.getMeals().stream()
+                                .map(mealRequestDTO -> new MealResponseDTO(
+                                        mealRequestDTO.getMealType(),
+                                        mealRequestDTO.getOperatingStartTime(),
+                                        mealRequestDTO.getOperatingEndTime(),
+                                        mealRequestDTO.getMainMenu(),
+                                        mealRequestDTO.getSubMenu()
+                                ))
+                                .toList()
+                )
+        );
+
         return ResponseEntity.ok(SuccessResponse.of(
                 HttpStatus.CREATED,
-                "daily meal plans uploaded successfully.",
-                savedImgPath
+                "Daily meal plans uploaded successfully.",
+                response
         ));
     }
 
@@ -108,7 +150,7 @@ public class AdminService {
                 DayOfWeek.valueOf(pendingDailyMealRequestDTO.getDayOfWeek()),
                 MenuStatus.PENDING
         );
-        List<MealResponseDTO> MealResponseDTOs = MenuConverter.toMealResponseDTOs(menus);
+        List<MealResponseDTO> MealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
 
 
         String dayOfWeek = pendingDailyMealRequestDTO.getDayOfWeek();
