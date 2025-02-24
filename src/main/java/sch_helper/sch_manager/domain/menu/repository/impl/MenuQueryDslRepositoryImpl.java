@@ -17,7 +17,6 @@ public class MenuQueryDslRepositoryImpl implements MenuQueryDslRepository {
 
     private final JPAQueryFactory queryFactory;
 
-
     @Override
     public List<Menu> getDailyMealByMenuStatus(String restaurantName, DayOfWeek dayOfWeek, MenuStatus menuStatus) {
 
@@ -31,6 +30,24 @@ public class MenuQueryDslRepositoryImpl implements MenuQueryDslRepository {
                         menu.menuStatus.eq(menuStatus)
                 )
                 .orderBy(menu.mealType.asc())
+                .fetch();
+    }
+
+    @Override
+    public List<Menu> getWeeklyMealByMenuStatus(String restaurantName, MenuStatus menuStatus) {
+
+        QMenu menu = QMenu.menu;
+
+        return queryFactory
+                .selectFrom(menu)
+                .where(
+                        menu.restaurant.name.eq(restaurantName),
+                        menu.menuStatus.eq(menuStatus)
+                )
+                .orderBy(
+                        menu.dayOfWeek.asc(),
+                        menu.mealType.asc()
+                )
                 .fetch();
     }
 }

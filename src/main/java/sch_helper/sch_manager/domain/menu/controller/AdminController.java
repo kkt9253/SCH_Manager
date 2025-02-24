@@ -9,6 +9,7 @@ import sch_helper.sch_manager.common.exception.custom.ApiException;
 import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.common.util.DateUtil;
 import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealRequestDTO;
+import sch_helper.sch_manager.domain.menu.dto.PendingWeeklyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.service.AdminService;
 
@@ -31,11 +32,6 @@ public class AdminController {
             @RequestPart("weeklyMealImg") MultipartFile weeklyMealImg
             ) {
 
-        System.out.println("restaurantName: " + restaurantName);
-        System.out.println("weekStartDate: " + weekStartDate);
-        System.out.println("dailyMealDTOS: " + dailyMealRequestDTOS);
-        System.out.println("weeklyMealImg: " + weeklyMealImg);
-
         // 폼 형식 안맞췄을 때 예외처리 필요
         if (!dateUtil.isSameDayOfWeek(weekStartDate, DayOfWeek.MONDAY)) {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
@@ -53,10 +49,6 @@ public class AdminController {
             @RequestPart("dailyMealImg") MultipartFile dailyMealImg
     ) {
 
-        System.out.println("restaurantName: " + restaurantName);
-        System.out.println("weekStartDate: " + weekStartDate);
-        System.out.println("dailyMealDTO: " + dailyMealRequestDTO);
-
         if (!dateUtil.isSameDayOfWeek(weekStartDate, DayOfWeek.MONDAY)) {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
@@ -64,14 +56,22 @@ public class AdminController {
         return adminService.uploadDailyMealPlans(restaurantName, weekStartDate, dailyMealRequestDTO, dailyMealImg);
     }
 
+    @GetMapping("/week-meal-plans")
+    public ResponseEntity<?> getPendingWeeklyMealPlans(
+            @ModelAttribute @Valid PendingWeeklyMealRequestDTO pendingWeeklyMealRequestDTO
+    ) {
+
+        if (!dateUtil.isSameDayOfWeek(pendingWeeklyMealRequestDTO.getWeekStartDate().toString(), DayOfWeek.MONDAY)) {
+            throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
+        }
+
+        return adminService.getPendingWeeklyMealPlans(pendingWeeklyMealRequestDTO);
+    }
+
     @GetMapping("/meal-plans")
     public ResponseEntity<?> getPendingDailyMealPlans(
             @ModelAttribute @Valid PendingDailyMealRequestDTO pendingDailyMealRequestDTO
             ) {
-
-        System.out.println("pendingDailyMealRequestDTO 1: " + pendingDailyMealRequestDTO.getRestaurantName());
-        System.out.println("pendingDailyMealRequestDTO 2: " + pendingDailyMealRequestDTO.getDayOfWeek());
-        System.out.println("pendingDailyMealRequestDTO 3: " + pendingDailyMealRequestDTO.getWeekStartDate());
 
         if (!dateUtil.isSameDayOfWeek(pendingDailyMealRequestDTO.getWeekStartDate().toString(), DayOfWeek.MONDAY)) {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);

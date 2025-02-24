@@ -10,6 +10,7 @@ import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
 import sch_helper.sch_manager.domain.menu.repository.MenuRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -42,5 +43,22 @@ public class MenuUtil {
 
             menuRepository.save(menu);
         }
+    }
+
+    public List<Menu> getDailyMealsByMenuStatus(String restaurantName, DayOfWeek dayOfWeek, MenuStatus menuStatus) {
+
+        return menuRepository.getDailyMealByMenuStatus(
+                restaurantName,
+                dayOfWeek,
+                menuStatus
+        );
+    }
+
+    public List<Menu> getWeeklyMealsByMenuStatus(String restaurantName, MenuStatus menuStatus) {
+
+        return menuRepository.getWeeklyMealByMenuStatus(
+                restaurantName,
+                menuStatus
+        );
     }
 }
