@@ -231,6 +231,19 @@ public class AdminMenuService {
 
         return ResponseEntity.ok(SuccessResponse.ok(response));
     }
+
+    @Transactional
+    public ResponseEntity<?> updateTotalOperatingTime(String restaurantName, TotalOperatingTimeRequestDTO request) {
+        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+                .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        restaurant.changeOperatingStartTime(request.getNewOperatingStartTime());
+        restaurant.changeOperatingEndTime(request.getNewOperatingEndTime());
+
+        RestaurantResponseDTO response = RestaurantConverter.toResponse(restaurant);
+
+        return ResponseEntity.ok(SuccessResponse.ok(response));
+    }
 }
 /*
 POST - http://localhost:8080/api/admin/week-meal-plans/faculty

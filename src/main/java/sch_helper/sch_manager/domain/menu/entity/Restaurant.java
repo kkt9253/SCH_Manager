@@ -30,4 +30,13 @@ public class Restaurant {
     public void changeIsActive(boolean isActive){
         this.isActive = isActive;
     }
+
+    // 고정 운영시간 변경을 위한 메소드
+    public void changeOperatingStartTime(String operatingStartTime) {
+        this.operatingStartTime = operatingStartTime;
+    }
+
+    public void changeOperatingEndTime(String operatingEndTime) {
+        this.operatingEndTime = operatingEndTime;
+    }
 }

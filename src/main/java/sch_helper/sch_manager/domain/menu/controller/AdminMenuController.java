@@ -11,6 +11,7 @@ import sch_helper.sch_manager.common.util.DateUtil;
 import sch_helper.sch_manager.domain.menu.dto.EarlyCloseRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingWeeklyMealRequestDTO;
+import sch_helper.sch_manager.domain.menu.dto.TotalOperatingTimeRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.service.AdminMenuService;
 
@@ -88,5 +89,14 @@ public class AdminMenuController {
             @RequestBody EarlyCloseRequestDTO earlyCloseRequestDTO
     ) {
         return adminMenuService.earlyClose(restaurantName, earlyCloseRequestDTO);
+    }
+
+    // 고정 운영시간 변경
+    @PostMapping("/total-operating-time/{restaurant-name}")
+    public ResponseEntity<?> updateTotalOperatingTime(
+            @PathVariable(name = "restaurant-name") @Valid String restaurantName,
+            @RequestBody TotalOperatingTimeRequestDTO request
+    ) {
+        return adminMenuService.updateTotalOperatingTime(restaurantName, request);
     }
 }
