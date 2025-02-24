@@ -1,5 +1,6 @@
 package sch_helper.sch_manager.domain.menu.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -11,14 +12,13 @@ import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.common.response.SuccessResponse;
 import sch_helper.sch_manager.common.util.FileUtil;
 import sch_helper.sch_manager.common.util.MenuUtil;
-import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealRequestDTO;
-import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealResponseDTO;
-import sch_helper.sch_manager.domain.menu.dto.PendingWeeklyMealRequestDTO;
-import sch_helper.sch_manager.domain.menu.dto.PendingWeeklyMealResponseDTO;
+import sch_helper.sch_manager.domain.menu.dto.*;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealResponseDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.MealResponseDTO;
+import sch_helper.sch_manager.domain.menu.dto.base.RestaurantResponseDTO;
 import sch_helper.sch_manager.domain.menu.dto.converter.MenuConverter;
+import sch_helper.sch_manager.domain.menu.dto.converter.RestaurantConverter;
 import sch_helper.sch_manager.domain.menu.entity.Menu;
 import sch_helper.sch_manager.domain.menu.entity.Restaurant;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
@@ -218,6 +218,18 @@ public class AdminMenuService {
         );
 
         return ResponseEntity.ok(SuccessResponse.ok(pendingDailyMealResponseDTO));
+    }
+
+    @Transactional
+    public ResponseEntity<?> earlyClose(String restaurantName, EarlyCloseRequestDTO earlyCloseRequestDTO) {
+        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+                .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        restaurant.changeIsActive(!earlyCloseRequestDTO.isEarlyClose());
+        RestaurantResponseDTO response = RestaurantConverter.toResponse(restaurant);
+
+
+        return ResponseEntity.ok(SuccessResponse.ok(response));
     }
 }
 /*

@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import sch_helper.sch_manager.common.exception.custom.ApiException;
 import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.common.util.DateUtil;
+import sch_helper.sch_manager.domain.menu.dto.EarlyCloseRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingWeeklyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
@@ -78,5 +79,14 @@ public class AdminMenuController {
         }
 
         return adminMenuService.getPendingDailyMealPlans(pendingDailyMealRequestDTO);
+    }
+
+    // 조기마감하기
+    @PostMapping("/early-close/{restaurant-name}")
+    public ResponseEntity<?> earlyClose(
+            @PathVariable(name = "restaurant-name") @Valid String restaurantName,
+            @RequestBody EarlyCloseRequestDTO earlyCloseRequestDTO
+    ) {
+        return adminMenuService.earlyClose(restaurantName, earlyCloseRequestDTO);
     }
 }

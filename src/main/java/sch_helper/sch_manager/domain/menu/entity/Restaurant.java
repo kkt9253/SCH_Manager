@@ -25,4 +25,9 @@ public class Restaurant {
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
+
+    // 조기 마감을 위한 메소드
+    public void changeIsActive(boolean isActive){
+        this.isActive = isActive;
+    }
 }
