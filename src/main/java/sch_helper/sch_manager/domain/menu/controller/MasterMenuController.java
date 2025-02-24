@@ -7,18 +7,19 @@ import org.springframework.web.bind.annotation.*;
 import sch_helper.sch_manager.common.exception.custom.ApiException;
 import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.common.util.DateUtil;
+import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingWeeklyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
-import sch_helper.sch_manager.domain.menu.service.MasterService;
+import sch_helper.sch_manager.domain.menu.service.MasterMenuService;
 
 import java.time.DayOfWeek;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/master")
-public class MasterController {
+public class MasterMenuController {
 
-    private final MasterService masterService;
+    private final MasterMenuService masterMenuService;
     private final DateUtil dateUtil;
 
     @PostMapping("/meal-plans/{restaurant-name}")
@@ -32,7 +33,7 @@ public class MasterController {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
 
-        return masterService.uploadMasterDailyMealPlans(restaurantName, dailyMealRequestDTO);
+        return masterMenuService.uploadMasterDailyMealPlans(restaurantName, dailyMealRequestDTO);
     }
 
     @GetMapping("/week-meal-plans")
@@ -44,6 +45,18 @@ public class MasterController {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
 
-        return masterService.getPendingWeeklyMealPlans(pendingWeeklyMealRequestDTO);
+        return masterMenuService.getPendingWeeklyMealPlans(pendingWeeklyMealRequestDTO);
+    }
+
+    @GetMapping("/meal-plans")
+    public ResponseEntity<?> getPendingDailyMealPlans(
+            @ModelAttribute @Valid PendingDailyMealRequestDTO pendingDailyMealRequestDTO
+    ) {
+
+        if (!dateUtil.isSameDayOfWeek(pendingDailyMealRequestDTO.getWeekStartDate().toString(), DayOfWeek.MONDAY)) {
+            throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
+        }
+
+        return masterMenuService.getPendingDailyMealPlans(pendingDailyMealRequestDTO);
     }
 }

@@ -11,7 +11,7 @@ import sch_helper.sch_manager.common.util.DateUtil;
 import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingWeeklyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
-import sch_helper.sch_manager.domain.menu.service.AdminService;
+import sch_helper.sch_manager.domain.menu.service.AdminMenuService;
 
 import java.time.DayOfWeek;
 import java.util.List;
@@ -19,9 +19,9 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
-public class AdminController {
+public class AdminMenuController {
 
-    private final AdminService adminService;
+    private final AdminMenuService adminMenuService;
     private final DateUtil dateUtil;
 
     @PostMapping("/week-meal-plans/{restaurant-name}")
@@ -38,7 +38,7 @@ public class AdminController {
         }
 
         // 식당과 사용자의 권한을 비교하여 동일하지 않으면 예외처리
-        return adminService.uploadWeeklyMealPlans(restaurantName, weekStartDate, dailyMealRequestDTOS, weeklyMealImg);
+        return adminMenuService.uploadWeeklyMealPlans(restaurantName, weekStartDate, dailyMealRequestDTOS, weeklyMealImg);
     }
 
     @PostMapping("/meal-plans/{restaurant-name}")
@@ -53,7 +53,7 @@ public class AdminController {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
 
-        return adminService.uploadDailyMealPlans(restaurantName, weekStartDate, dailyMealRequestDTO, dailyMealImg);
+        return adminMenuService.uploadDailyMealPlans(restaurantName, weekStartDate, dailyMealRequestDTO, dailyMealImg);
     }
 
     @GetMapping("/week-meal-plans")
@@ -65,7 +65,7 @@ public class AdminController {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
 
-        return adminService.getPendingWeeklyMealPlans(pendingWeeklyMealRequestDTO);
+        return adminMenuService.getPendingWeeklyMealPlans(pendingWeeklyMealRequestDTO);
     }
 
     @GetMapping("/meal-plans")
@@ -77,6 +77,6 @@ public class AdminController {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
 
-        return adminService.getPendingDailyMealPlans(pendingDailyMealRequestDTO);
+        return adminMenuService.getPendingDailyMealPlans(pendingDailyMealRequestDTO);
     }
 }

@@ -6,10 +6,12 @@ import org.springframework.stereotype.Repository;
 import sch_helper.sch_manager.domain.menu.entity.Menu;
 import sch_helper.sch_manager.domain.menu.entity.QMenu;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
+import sch_helper.sch_manager.domain.menu.enums.MealType;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
 import sch_helper.sch_manager.domain.menu.repository.MenuQueryDslRepository;
 
 import java.util.List;
+import com.querydsl.core.types.dsl.CaseBuilder;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,7 +31,14 @@ public class MenuQueryDslRepositoryImpl implements MenuQueryDslRepository {
                         menu.dayOfWeek.eq(dayOfWeek),
                         menu.menuStatus.eq(menuStatus)
                 )
-                .orderBy(menu.mealType.asc())
+                .orderBy(
+                        new CaseBuilder()
+                                .when(menu.mealType.eq(MealType.BREAKFAST)).then(1)
+                                .when(menu.mealType.eq(MealType.LUNCH)).then(2)
+                                .when(menu.mealType.eq(MealType.DINNER)).then(3)
+                                .otherwise(4)
+                                .asc()
+                )
                 .fetch();
     }
 
@@ -46,7 +55,12 @@ public class MenuQueryDslRepositoryImpl implements MenuQueryDslRepository {
                 )
                 .orderBy(
                         menu.dayOfWeek.asc(),
-                        menu.mealType.asc()
+                        new CaseBuilder()
+                                .when(menu.mealType.eq(MealType.BREAKFAST)).then(1)
+                                .when(menu.mealType.eq(MealType.LUNCH)).then(2)
+                                .when(menu.mealType.eq(MealType.DINNER)).then(3)
+                                .otherwise(4)
+                                .asc()
                 )
                 .fetch();
     }
