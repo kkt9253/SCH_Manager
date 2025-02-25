@@ -8,8 +8,10 @@ import org.springframework.web.multipart.MultipartFile;
 import sch_helper.sch_manager.common.exception.custom.ApiException;
 import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.common.util.DateUtil;
+import sch_helper.sch_manager.domain.menu.dto.EarlyCloseRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingWeeklyMealRequestDTO;
+import sch_helper.sch_manager.domain.menu.dto.TotalOperatingTimeRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.service.AdminMenuService;
 
@@ -78,5 +80,23 @@ public class AdminMenuController {
         }
 
         return adminMenuService.getPendingDailyMealPlans(pendingDailyMealRequestDTO);
+    }
+
+    // 조기마감하기
+    @PostMapping("/early-close/{restaurant-name}")
+    public ResponseEntity<?> earlyClose(
+            @PathVariable(name = "restaurant-name") String restaurantName,
+            @RequestBody @Valid EarlyCloseRequestDTO earlyCloseRequestDTO
+    ) {
+        return adminMenuService.earlyClose(restaurantName, earlyCloseRequestDTO);
+    }
+
+    // 고정 운영시간 변경
+    @PostMapping("/total-operating-time/{restaurant-name}")
+    public ResponseEntity<?> updateTotalOperatingTime(
+            @PathVariable(name = "restaurant-name") String restaurantName,
+            @RequestBody @Valid TotalOperatingTimeRequestDTO request
+    ) {
+        return adminMenuService.updateTotalOperatingTime(restaurantName, request);
     }
 }
