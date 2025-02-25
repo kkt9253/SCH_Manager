@@ -85,8 +85,8 @@ public class AdminMenuController {
     // 조기마감하기
     @PostMapping("/early-close/{restaurant-name}")
     public ResponseEntity<?> earlyClose(
-            @PathVariable(name = "restaurant-name") @Valid String restaurantName,
-            @RequestBody EarlyCloseRequestDTO earlyCloseRequestDTO
+            @PathVariable(name = "restaurant-name") String restaurantName,
+            @RequestBody @Valid EarlyCloseRequestDTO earlyCloseRequestDTO
     ) {
         return adminMenuService.earlyClose(restaurantName, earlyCloseRequestDTO);
     }
@@ -94,8 +94,8 @@ public class AdminMenuController {
     // 고정 운영시간 변경
     @PostMapping("/total-operating-time/{restaurant-name}")
     public ResponseEntity<?> updateTotalOperatingTime(
-            @PathVariable(name = "restaurant-name") @Valid String restaurantName,
-            @RequestBody TotalOperatingTimeRequestDTO request
+            @PathVariable(name = "restaurant-name") String restaurantName,
+            @RequestBody @Valid TotalOperatingTimeRequestDTO request
     ) {
         return adminMenuService.updateTotalOperatingTime(restaurantName, request);
     }
