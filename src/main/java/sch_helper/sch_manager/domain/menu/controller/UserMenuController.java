@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import sch_helper.sch_manager.common.exception.custom.ApiException;
 import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
+import sch_helper.sch_manager.domain.menu.enums.RestaurantName;
 import sch_helper.sch_manager.domain.menu.service.UserMenuService;
 
 
@@ -37,5 +38,19 @@ public class UserMenuController {
         return userMenuService.getApprovedTodayMealPlans(dayOfWeek);
     }
 
+    @GetMapping("/meal-plans/detail/{restaurant-name}")
+    public ResponseEntity<?> getApprovedDetailMealPlans(@PathVariable("restaurant-name") String restaurantName) {
+
+        if (restaurantName.isEmpty() &&
+                (
+                        !restaurantName.equals(RestaurantName.HYANGSEOL1.toString()) ||
+                        !restaurantName.equals(RestaurantName.FACULTY.toString())
+                )
+        ) {
+            throw new ApiException(ErrorCode.INVALID_REQUEST_DATA);
+        }
+
+        return userMenuService.getApprovedDetailMealPlans(restaurantName);
+    }
 
 }

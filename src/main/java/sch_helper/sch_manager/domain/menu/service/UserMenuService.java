@@ -7,6 +7,7 @@ import sch_helper.sch_manager.common.exception.custom.ApiException;
 import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.common.response.SuccessResponse;
 import sch_helper.sch_manager.common.util.MenuUtil;
+import sch_helper.sch_manager.domain.menu.dto.ApprovedDetailMealResponseDTO;
 import sch_helper.sch_manager.domain.menu.dto.ApprovedTodayMealResponseDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealResponseDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.MealResponseDTO;
@@ -54,6 +55,26 @@ public class UserMenuService {
         }
 
         return ResponseEntity.ok(SuccessResponse.ok(approvedTodayMealResponseDTOs));
+    }
+
+    public ResponseEntity<?> getApprovedDetailMealPlans(String restaurantName) {
+
+        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+                .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        String restaurantOperatingStartTime = restaurant.getOperatingStartTime();
+        String restaurantOperatingEndTime = restaurant.getOperatingEndTime();
+        boolean isActive = restaurant.isActive();
+
+        List<DailyMealResponseDTO> dailyMealResponseDTOs = MenuConverter.getDailyMealResponseDTOsByMenus(
+                menuUtil.getWeeklyMealsByMenuStatus(restaurantName, MenuStatus.APPROVED));
+
+        return ResponseEntity.ok(SuccessResponse.ok(new ApprovedDetailMealResponseDTO(
+                restaurantOperatingStartTime,
+                restaurantOperatingEndTime,
+                isActive,
+                dailyMealResponseDTOs)
+        ));
     }
 
 }
