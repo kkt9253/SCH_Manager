@@ -33,7 +33,7 @@ public class MasterMenuController {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
 
-        return masterMenuService.uploadMasterDailyMealPlans(restaurantName, dailyMealRequestDTO);
+        return masterMenuService.uploadDailyMealPlans(restaurantName, dailyMealRequestDTO);
     }
 
     @GetMapping("/week-meal-plans")
