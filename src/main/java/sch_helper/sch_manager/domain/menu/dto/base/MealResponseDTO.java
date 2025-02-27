@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import sch_helper.sch_manager.domain.menu.entity.Menu;
-import sch_helper.sch_manager.domain.menu.enums.MealType;
 
 @Getter
 @Setter

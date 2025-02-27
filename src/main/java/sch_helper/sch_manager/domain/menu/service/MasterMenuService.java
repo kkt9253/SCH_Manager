@@ -33,7 +33,7 @@ public class MasterMenuService {
     private final MenuUtil menuUtil;
     private final FileUtil fileUtil;
 
-    public ResponseEntity<?> uploadMasterDailyMealPlans(
+    public ResponseEntity<?> uploadDailyMealPlans(
             String restaurantName,
             DailyMealRequestDTO dailyMealRequestDTO
     ) {
@@ -41,14 +41,28 @@ public class MasterMenuService {
         Restaurant restaurant = restaurantRepository.findByName(restaurantName)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-        // 최종 승인이기 때문에 관리자가 조회하는 식단표도 최신화해줘야 함.
         menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.APPROVED);
         menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING);
 
+        List<Menu> menus = menuUtil.getDailyMealsByMenuStatus(
+                restaurantName,
+                DayOfWeek.valueOf(dailyMealRequestDTO.getDayOfWeek()),
+                MenuStatus.PENDING
+        );
+        List<MealResponseDTO> MealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
+
+        PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
+                null,
+                null,
+                new DailyMealResponseDTO(dailyMealRequestDTO.getDayOfWeek(), MealResponseDTOs)
+        );
+
         return ResponseEntity.ok(SuccessResponse.of(
                 HttpStatus.CREATED,
-                "daily meal plans Final approval and uploaded successfully."
+                "Daily meal plans Final approval and uploaded successfully.",
+                pendingDailyMealResponseDTO
         ));
+
     }
 
     public ResponseEntity<?> getPendingWeeklyMealPlans(PendingWeeklyMealRequestDTO pendingWeeklyMealRequestDTO) {

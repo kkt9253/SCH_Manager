@@ -14,7 +14,7 @@ public class Restaurant {
     @Column(name = "restaurant_id")
     private Long id;
 
-    @Column(name = "restaurant_name", nullable = false)
+    @Column(name = "restaurant_name", nullable = false, unique = true)
     private String name;
 
     @Column(name = "operating_start_time", nullable = false)
