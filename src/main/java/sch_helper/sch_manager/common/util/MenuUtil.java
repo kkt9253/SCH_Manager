@@ -21,7 +21,7 @@ public class MenuUtil {
     private final MenuRepository menuRepository;
 
     @Transactional
-    public void saveDailyMeal(Restaurant restaurant, DailyMealRequestDTO dailyMealRequestDTO, MenuStatus menuStatus, MenuImage menuImage) {
+    public void saveDailyMeal(Restaurant restaurant, DailyMealRequestDTO dailyMealRequestDTO, MenuStatus menuStatus) {
 
         DayOfWeek dayOfWeek = DayOfWeek.valueOf(dailyMealRequestDTO.getDayOfWeek());
 
@@ -41,9 +41,6 @@ public class MenuUtil {
             menu.setSubMenu(mealRequestDTO.getSubMenu());
             menu.setUnique(uniqueName);
             menu.setMenuStatus(menuStatus);
-            if (menuImage != null) {
-                menu.setMenuImage(menuImage);
-            }
 
             menuRepository.save(menu);
         }

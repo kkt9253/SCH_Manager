@@ -47,6 +47,7 @@ public enum ErrorCode {
     MENU_ALREADY_EXISTS(HttpStatus.CONFLICT, "C002", "해당 메뉴는 이미 존재합니다."),
     INVALID_MEAL_TYPE(HttpStatus.CONFLICT, "C003", "잘못된 식단 유형입니다."),
     INVALID_OPERATION(HttpStatus.CONFLICT, "C004", "이 작업을 수행할 수 없습니다."),
+    TRANSFORMATION_ERROR(HttpStatus.CONFLICT, "C005", "데이터 변환 과정에서 오류가 발생했습니다."),
 
     /** ========== 415 UNSUPPORTED_MEDIA_TYPE (잘못된 Content-Type) ========== **/
     UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "U001", "지원되지 않는 Content-Type입니다."),
