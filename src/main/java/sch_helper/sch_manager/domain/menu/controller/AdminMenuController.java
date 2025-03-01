@@ -43,9 +43,10 @@ public class AdminMenuController {
         return adminMenuService.uploadWeeklyMealPlans(restaurantName, weekStartDate, dailyMealRequestDTOS, weeklyMealImg);
     }
 
-    @PostMapping("/meal-plans/{restaurant-name}")
+    @PostMapping("/meal-plans/{restaurant-name}/{day-of-week}")
     public ResponseEntity<?> uploadDailyMealPlans(
             @PathVariable(name = "restaurant-name") String restaurantName,
+            @PathVariable(name = "day-of-week") String dayOfWeek, // 특정 요일 확실하게 알려면 필요함. 아래에 중복되긴 하는데 dto 여러 곳에서 사용해서 냅둬야 할 듯
             @RequestPart("weekStartDate") String weekStartDate,
             @RequestPart(value = "dailyMeals", required = false) @Valid DailyMealRequestDTO dailyMealRequestDTO,
             @RequestPart("dailyMealImg") MultipartFile dailyMealImg
@@ -54,8 +55,19 @@ public class AdminMenuController {
         if (!dateUtil.isSameDayOfWeek(weekStartDate, DayOfWeek.MONDAY)) {
             throw new ApiException(ErrorCode.DATE_DAY_MISMATCH);
         }
+        if (dayOfWeek.isEmpty() &&
+                (
+                        !dayOfWeek.equals(DayOfWeek.MONDAY.toString()) ||
+                                !dayOfWeek.equals(DayOfWeek.TUESDAY.toString()) ||
+                                !dayOfWeek.equals(DayOfWeek.WEDNESDAY.toString()) ||
+                                !dayOfWeek.equals(DayOfWeek.THURSDAY.toString()) ||
+                                !dayOfWeek.equals(DayOfWeek.FRIDAY.toString())
+                )
+        ) {
+            throw new ApiException(ErrorCode.INVALID_REQUEST_DATA);
+        }
 
-        return adminMenuService.uploadDailyMealPlans(restaurantName, weekStartDate, dailyMealRequestDTO, dailyMealImg);
+        return adminMenuService.uploadDailyMealPlans(restaurantName, dayOfWeek, weekStartDate, dailyMealRequestDTO, dailyMealImg);
     }
 
     @GetMapping("/week-meal-plans")

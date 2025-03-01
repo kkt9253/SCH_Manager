@@ -2,16 +2,17 @@ package sch_helper.sch_manager.common.util;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.MealRequestDTO;
 import sch_helper.sch_manager.domain.menu.entity.Menu;
+import sch_helper.sch_manager.domain.menu.entity.MenuImage;
 import sch_helper.sch_manager.domain.menu.entity.Restaurant;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
 import sch_helper.sch_manager.domain.menu.repository.MenuRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -19,8 +20,8 @@ public class MenuUtil {
 
     private final MenuRepository menuRepository;
 
-
-    public void saveDailyMeal(Restaurant restaurant, DailyMealRequestDTO dailyMealRequestDTO, MenuStatus menuStatus) {
+    @Transactional
+    public void saveDailyMeal(Restaurant restaurant, DailyMealRequestDTO dailyMealRequestDTO, MenuStatus menuStatus, MenuImage menuImage) {
 
         DayOfWeek dayOfWeek = DayOfWeek.valueOf(dailyMealRequestDTO.getDayOfWeek());
 
@@ -28,9 +29,9 @@ public class MenuUtil {
 
             String uniqueName = restaurant.getId() + "_" + dayOfWeek + "_" + mealRequestDTO.getMealType() + "_" + menuStatus;
 
-            Optional<Menu> existMenu = menuRepository.findByUnique(uniqueName);
+            Menu menu = menuRepository.findByUnique(uniqueName)
+                    .orElse(new Menu());
 
-            Menu menu = existMenu.orElse(new Menu());
             menu.setRestaurant(restaurant);
             menu.setDayOfWeek(dayOfWeek);
             menu.setMealType(mealRequestDTO.getMealTypeEnum());
@@ -40,6 +41,9 @@ public class MenuUtil {
             menu.setSubMenu(mealRequestDTO.getSubMenu());
             menu.setUnique(uniqueName);
             menu.setMenuStatus(menuStatus);
+            if (menuImage != null) {
+                menu.setMenuImage(menuImage);
+            }
 
             menuRepository.save(menu);
         }

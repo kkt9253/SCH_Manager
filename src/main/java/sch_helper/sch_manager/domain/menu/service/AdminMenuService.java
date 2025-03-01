@@ -2,7 +2,6 @@ package sch_helper.sch_manager.domain.menu.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,16 +19,17 @@ import sch_helper.sch_manager.domain.menu.dto.base.RestaurantResponseDTO;
 import sch_helper.sch_manager.domain.menu.dto.converter.MenuConverter;
 import sch_helper.sch_manager.domain.menu.dto.converter.RestaurantConverter;
 import sch_helper.sch_manager.domain.menu.entity.Menu;
+import sch_helper.sch_manager.domain.menu.entity.MenuImage;
 import sch_helper.sch_manager.domain.menu.entity.Restaurant;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
+import sch_helper.sch_manager.domain.menu.enums.MealType;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
+import sch_helper.sch_manager.domain.menu.repository.MenuImageRepository;
+import sch_helper.sch_manager.domain.menu.repository.MenuRepository;
 import sch_helper.sch_manager.domain.menu.repository.RestaurantRepository;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Base64;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,29 +39,43 @@ public class AdminMenuService {
     private final RestaurantRepository restaurantRepository;
     private final FileUtil fileUtil;
     private final MenuUtil menuUtil;
+    private final MenuImageRepository menuImageRepository;
+    private final MenuRepository menuRepository;
 
+    @Transactional
     public ResponseEntity<?> uploadWeeklyMealPlans(
             String restaurantName,
             String weekStartDate,
-            List<DailyMealRequestDTO> dailyMealRequestDTOS,
+            List<DailyMealRequestDTO> dailyMealRequestDTOs,
             MultipartFile weeklyMealImg
     ) {
 
-        String savedImgPath = null;
+        String imageName = null;
+        byte[] byteImage = null;
+        byte[] encodeImage = null;
         try {
-            String fileName = restaurantName + "-" + weekStartDate + "-week.jpg";
-            savedImgPath = fileUtil.saveFile(weeklyMealImg, "weeklyMealImg", fileName);
+            imageName = restaurantName + "-" + weekStartDate + "-week";
+            byteImage = fileUtil.imageToByte(weeklyMealImg);
+            encodeImage = fileUtil.encodeByteToBase64(byteImage);
         } catch (IOException e) {
             throw new ApiException(ErrorCode.UPLOAD_FAILED);
         }
 
+        MenuImage menuImage = menuImageRepository.findByImageName(imageName)
+                        .orElse(new MenuImage());
+        menuImage.setImageName(imageName);
+        menuImage.setImageBinary(byteImage);
+
+        menuImageRepository.save(menuImage);
+
         Restaurant restaurant = restaurantRepository.findByName(restaurantName)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-        if (dailyMealRequestDTOS != null) {
-            for (DailyMealRequestDTO dailyMealRequestDTO : dailyMealRequestDTOS) {
+        if (dailyMealRequestDTOs != null) {
+            for (DailyMealRequestDTO dailyMealRequestDTO : dailyMealRequestDTOs) {
 
-                menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING);
+                // 일주일치 식단표 이미지는 menuImage-WeekInfo 필드를 통해 참조할 것이기 때문에 null
+                menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING, null);
             }
 
             List<Menu> menus = menuUtil.getWeeklyMealsByMenuStatus(
@@ -70,12 +84,8 @@ public class AdminMenuService {
             );
             List<DailyMealResponseDTO> DailyMealResponseDTOs = MenuConverter.getDailyMealResponseDTOsByMenus(menus);
 
-            String weekFileName = restaurantName + "-" + weekStartDate + "-week.jpg";
-            String weekMealImgPath = fileUtil.getFile("weeklyMealImg", weekFileName);
-
-
             PendingWeeklyMealResponseDTO pendingWeeklyMealResponseDTO = new PendingWeeklyMealResponseDTO(
-                    weekMealImgPath,
+                    encodeImage,
                     DailyMealResponseDTOs
             );
 
@@ -89,34 +99,47 @@ public class AdminMenuService {
         return ResponseEntity.ok(SuccessResponse.of(
                 HttpStatus.CREATED,
                 "Weekly meal plans uploaded successfully.",
-                savedImgPath
+                encodeImage
         ));
-
     }
 
-
+    @Transactional
     public ResponseEntity<?> uploadDailyMealPlans(
             String restaurantName,
+            String dayOfWeek,
             String weekStartDate,
             DailyMealRequestDTO dailyMealRequestDTO,
             MultipartFile dailyMealImg
     ) {
 
-        String savedImgPath = null;
+        String imageName = null;
+        byte[] byteImage = null;
+        byte[] encodeImage = null;
         try {
 
-            String fileName = restaurantName + "-" + weekStartDate + "-day.jpg";
-            savedImgPath = fileUtil.saveFile(dailyMealImg, "dailyMealImg", fileName);
+            imageName = restaurantName + "-" + weekStartDate + "-day";
+            byteImage = fileUtil.imageToByte(dailyMealImg);
+            encodeImage = fileUtil.encodeByteToBase64(byteImage);
         } catch (IOException e) {
             throw new ApiException(ErrorCode.UPLOAD_FAILED);
         }
 
+        // 만약 재업로드라면 이전의 이미지가 남아있고 덮어씌우지 않도록 동작하지만, 어차피 menu -> menuImage_id 참조를 통해 이미지 가져오기 때문에 상관 없음
+        MenuImage menuImage = new MenuImage();
+        menuImage.setImageName(imageName);
+        menuImage.setImageBinary(byteImage);
+        menuImageRepository.save(menuImage);
+
         Restaurant restaurant = restaurantRepository.findByName(restaurantName)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
+
+        // 식단표 업로드 api들의 요청 파라미터에서 이미지는 필수이지만, 식단표 텍스트는 필수가 아님.
+        // 업로드 시 식단표 텍스트 존재 O
         if (dailyMealRequestDTO != null) {
 
-            menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING);
+            // 특정 요일의 식단표 이미지는 연관관계 매핑 해줘야 함
+            menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING, menuImage);
 
             List<Menu> menus = menuUtil.getDailyMealsByMenuStatus(
                     restaurantName,
@@ -125,24 +148,22 @@ public class AdminMenuService {
             );
             List<MealResponseDTO> MealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
 
-            for (MealResponseDTO mealResponseDTO : MealResponseDTOs) {
-                System.out.println(mealResponseDTO.getMealType());
+            // 일주일치 식단표 이미지 참조
+            MenuImage weekMenuImage = menuImageRepository.findByImageName(restaurantName + "-" + weekStartDate + "-week")
+                    .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+
+            byte[] encodeWeekImage = null;
+            try {
+
+                encodeWeekImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
+            } catch (IOException e) {
+                throw new ApiException(ErrorCode.DATABASE_ERROR);
             }
 
-
-            String dayOfWeek = dailyMealRequestDTO.getDayOfWeek();
-
-            String dayFileName = restaurantName + "-" + weekStartDate + "-day.jpg";
-            String weekFileName = restaurantName + "-" + weekStartDate + "-week.jpg";
-
-            String dayMealImgPath = fileUtil.getFile("dailyMealImg", dayFileName);
-            String weekMealImgPath = fileUtil.getFile("weeklyMealImg", weekFileName);
-
-
             PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
-                    dayMealImgPath,
-                    weekMealImgPath,
-                    new DailyMealResponseDTO(dayOfWeek, MealResponseDTOs)
+                    encodeImage,
+                    encodeWeekImage,
+                    new DailyMealResponseDTO(dailyMealRequestDTO.getDayOfWeek(), MealResponseDTOs)
             );
 
             return ResponseEntity.ok(SuccessResponse.of(
@@ -152,12 +173,63 @@ public class AdminMenuService {
             ));
         }
 
+        // 업로드 시 식단표 텍스트 존재 X
+        // 하지만 특정요일 이미지는 menu->menuImage 참조를 하기 때문에 이미지만 업로드하더라도 참조가 가능하도록 DB에 빈 컬럼이더라도 연관관계 설정이 필요함
+        List<Menu> menus = new ArrayList<>();
+        for (MealType mealType : MealType.values()) {
+
+            String uniqueName = restaurant.getId() + "_" + dayOfWeek + "_" + mealType.name() + "_" + MenuStatus.PENDING.name();
+            Menu menu = menuRepository.findByUnique(uniqueName)
+                    .orElse(new Menu());
+
+            menus.add(menu);
+        }
+
+        // 이미 식단표가 존재하고, 재업로드 된 상황이면 덮어쓰기
+        if (!menus.isEmpty()) {
+
+            for (Menu menu : menus) {
+
+                menu.setRestaurant(menu.getRestaurant());
+                menu.setDayOfWeek(menu.getDayOfWeek());
+                menu.setMealType(menu.getMealType());
+                menu.setOperatingStartTime(menu.getOperatingStartTime());
+                menu.setOperatingEndTime(menu.getOperatingEndTime());
+                menu.setMainMenu(menu.getMainMenu());
+                menu.setSubMenu(menu.getSubMenu());
+                menu.setUnique(menu.getUnique());
+                menu.setMenuStatus(menu.getMenuStatus());
+                menu.setMenuImage(menuImage);
+
+                menuRepository.save(menu);
+            }
+        }
+        // 존재하지 않는다면 menu컬럼이 없기 때문에 연관관계을 위해 깡통 menu를 만들어 특정요일 이미지와 연결시켜야 함
+        else {
+
+            String uniqueName = restaurant.getId() + "_" + dayOfWeek + "_" + MealType.LUNCH.name() + "_" + MenuStatus.PENDING.name();
+            Menu menu = new Menu();
+
+            menu.setRestaurant(restaurant);
+            menu.setDayOfWeek(DayOfWeek.valueOf(dayOfWeek));
+            // 향1, 교직원 식당에서 공통으로 점심은 필수이기 때문에 Lunch로 설정
+            menu.setMealType(MealType.LUNCH);
+            menu.setOperatingStartTime("temp");
+            menu.setOperatingEndTime("temp");
+            menu.setMainMenu("temp");
+            menu.setSubMenu("temp");
+            menu.setUnique(uniqueName);
+            menu.setMenuStatus(MenuStatus.PENDING);
+            menu.setMenuImage(menuImage);
+
+            menuRepository.save(menu);
+        }
+
         return ResponseEntity.ok(SuccessResponse.of(
                 HttpStatus.CREATED,
                 "Daily meal plans uploaded successfully.",
-                savedImgPath
+                encodeImage
         ));
-
     }
 
     public ResponseEntity<?> getPendingWeeklyMealPlans(PendingWeeklyMealRequestDTO pendingWeeklyMealRequestDTO) {
@@ -167,19 +239,25 @@ public class AdminMenuService {
                 MenuStatus.PENDING
         );
         if (menus.isEmpty()) {
+            // front: 식단표가 업로드되지 않았습니다. 화면으로 설정
             throw new ApiException(ErrorCode.MENU_NOT_FOUND);
         }
         List<DailyMealResponseDTO> DailyMealResponseDTOs = MenuConverter.getDailyMealResponseDTOsByMenus(menus);
 
+        String weekImageName = pendingWeeklyMealRequestDTO.getRestaurantName() + "-" + pendingWeeklyMealRequestDTO.getWeekStartDate().toString() + "-week";
+        MenuImage menuImage = menuImageRepository.findByImageName(weekImageName)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
 
-        String restaurantName = pendingWeeklyMealRequestDTO.getRestaurantName();
-        String weekStartDate = pendingWeeklyMealRequestDTO.getWeekStartDate().toString();
-        String weekFileName = restaurantName + "-" + weekStartDate + "-week.jpg";
+        byte[] weekMealImage = null;
+        try {
 
-        String weekMealImgPath = fileUtil.getFile("weeklyMealImg", weekFileName);
+            weekMealImage = fileUtil.encodeByteToBase64(menuImage.getImageBinary());
+        } catch (IOException e) {
+            throw new ApiException(ErrorCode.DATABASE_ERROR);
+        }
 
         PendingWeeklyMealResponseDTO pendingWeeklyMealResponseDTO = new PendingWeeklyMealResponseDTO(
-                weekMealImgPath,
+                weekMealImage,
                 DailyMealResponseDTOs
         );
 
@@ -196,24 +274,38 @@ public class AdminMenuService {
         if (menus.isEmpty()) {
             throw new ApiException(ErrorCode.MENU_NOT_FOUND);
         }
+
         List<MealResponseDTO> MealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
 
-
         String dayOfWeek = pendingDailyMealRequestDTO.getDayOfWeek();
-        String restaurantName = pendingDailyMealRequestDTO.getRestaurantName();
-        String weekStartDate = pendingDailyMealRequestDTO.getWeekStartDate().toString();
 
-        String dayFileName = restaurantName + "-" + weekStartDate + "-day.jpg";
-        String weekFileName = restaurantName + "-" + weekStartDate + "-week.jpg";
-
-        String dayMealImgPath = fileUtil.getFile("dailyMealImg", dayFileName);
-        String weekMealImgPath = fileUtil.getFile("weeklyMealImg", weekFileName);
+        byte[] dayMealImage = null;
+        try {
+            dayMealImage = fileUtil.encodeByteToBase64(menus.get(0).getMenuImage().getImageBinary());
 
 
-        // 이미지 경로가 아닌 이미지 보내는 걸로 수정 예정
+            System.out.println(menus.get(0).getMenuImage().getImageName());
+
+
+        } catch (IOException e) {
+            throw new ApiException(ErrorCode.DATABASE_ERROR);
+        }
+
+        String weekImageName = pendingDailyMealRequestDTO.getRestaurantName() + "-" + pendingDailyMealRequestDTO.getWeekStartDate().toString() + "-week";
+        MenuImage weekMenuImage = menuImageRepository.findByImageName(weekImageName)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+
+        byte[] weekMealImage = null;
+        try {
+
+            weekMealImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
+        } catch (IOException e) {
+            throw new ApiException(ErrorCode.UPLOAD_FAILED);
+        }
+
         PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
-                dayMealImgPath,
-                weekMealImgPath,
+                dayMealImage,
+                weekMealImage,
                 new DailyMealResponseDTO(dayOfWeek, MealResponseDTOs)
         );
 
@@ -245,169 +337,3 @@ public class AdminMenuService {
         return ResponseEntity.ok(SuccessResponse.ok(response));
     }
 }
-/*
-POST - http://localhost:8080/api/admin/week-meal-plans/faculty
-[
-    {
-        "dayOfWeek": "MONDAY",
-        "meals": [
-            {
-                "mealType": "BREAKFAST",
-                "operatingStartTime": "08:00",
-                "operatingEndTime": "09:30",
-                "mainMenu": "불고기",
-                "subMenu": "김치, 감자볶음"
-            },
-            {
-                "mealType": "LUNCH",
-                "operatingStartTime": "11:00",
-                "operatingEndTime": "14:00",
-                "mainMenu": "불고기, 된장찌개",
-                "subMenu": "샐러드, 계란찜"
-            }
-        ]
-    },
-    {
-        "dayOfWeek": "TUESDAY",
-        "meals": [
-            {
-                "mealType": "BREAKFAST",
-                "operatingStartTime": "08:00",
-                "operatingEndTime": "09:30",
-                "mainMenu": "된장찌개2, 비빔밥2, 도시락2",
-                "subMenu": "김치2, 감자볶음2"
-            },
-            {
-                "mealType": "LUNCH",
-                "operatingStartTime": "11:00",
-                "operatingEndTime": "14:00",
-                "mainMenu": "불고기2, 된장찌개2",
-                "subMenu": "샐러드2, 계란찜2"
-            }
-        ]
-    },
-    {
-        "dayOfWeek": "WEDNESDAY",
-        "meals": [
-            {
-                "mealType": "BREAKFAST",
-                "operatingStartTime": "08:00",
-                "operatingEndTime": "09:30",
-                "mainMenu": "된장찌개2, 비빔밥2, 도시락2",
-                "subMenu": "김치2, 감자볶음2"
-            },
-            {
-                "mealType": "LUNCH",
-                "operatingStartTime": "11:00",
-                "operatingEndTime": "14:00",
-                "mainMenu": "불고기2, 된장찌개2",
-                "subMenu": "샐러드2, 계란찜2"
-            },
-            {
-                "mealType": "DINNER",
-                "operatingStartTime": "17:00",
-                "operatingEndTime": "19:00",
-                "mainMenu": "메인메뉴1, 메인메뉴2",
-                "subMenu": "서브메뉴1, 서브메뉴2"
-            }
-        ]
-    }
-]
- */
-/*
-POST - http://localhost:8080/api/admin/meal-plans/hyangseol1
-{
-            "dayOfWeek": "MONDAY",
-            "meals": [
-                {
-                    "mealType": "BREAKFAST",
-                    "operatingStartTime": "08:00",
-                    "operatingEndTime": "09:30",
-                    "mainMenu": "된장찌개3, 비빔밥3, 도시락3",
-                    "subMenu": "김치2, 감자볶음2"
-                },
-                {
-                    "mealType": "LUNCH",
-                    "operatingStartTime": "11:00",
-                    "operatingEndTime": "14:00",
-                    "mainMenu": "불고기3, 된장찌개2",
-                    "subMenu": "샐러드3, 계란찜2"
-                },
-                {
-                    "mealType": "DINNER",
-                    "operatingStartTime": "11:00",
-                    "operatingEndTime": "14:00",
-                    "mainMenu": "불고기3, 된장찌개2",
-                    "subMenu": "샐러드3, 계란찜2"
-                }
-            ]
-        }
- */
-
-
-/*
-[
-        "weekStartDate": "2025-02-17",
-        {
-            "dayOfWeek": "MONDAY",
-            "meals": [
-                {
-                    "mealType": "BREAKFAST",
-                    "operatingStartTime": "08:00",
-                    "operatingEndTime": "09:30",
-                    "mainMenu": "된장찌개, 비빔밥, 도시락",
-                    "subMenu": "김치, 감자볶음"
-                },
-                {
-                    "mealType": "LUNCH",
-                    "operatingStartTime": "11:00",
-                    "operatingEndTime": "14:00",
-                    "mainMenu": "불고기, 된장찌개",
-                    "subMenu": "샐러드, 계란찜"
-                }
-            ]
-        },
-        {
-            "dayOfWeek": "TUESDAY",
-            "meals": [
-                {
-                    "mealType": "BREAKFAST",
-                    "operatingStartTime": "08:00",
-                    "operatingEndTime": "09:30",
-                    "mainMenu": "된장찌개2, 비빔밥2, 도시락2",
-                    "subMenu": "김치2, 감자볶음2"
-                },
-                {
-                    "mealType": "LUNCH",
-                    "operatingStartTime": "11:00",
-                    "operatingEndTime": "14:00",
-                    "mainMenu": "불고기2, 된장찌개2",
-                    "subMenu": "샐러드2, 계란찜2"
-                }
-            ]
-        },
-        {
-            "dayOfWeek": "WEDNESDAY",
-            "meals": [
-                {
-                    "mealType": "BREAKFAST",
-                    "operatingStartTime": "08:00",
-                    "operatingEndTime": "09:30",
-                    "mainMenu": "된장찌개2, 비빔밥2, 도시락2",
-                    "subMenu": "김치2, 감자볶음2"
-                },
-                {
-                    "mealType": "LUNCH",
-                    "operatingStartTime": "11:00",
-                    "operatingEndTime": "14:00",
-                    "mainMenu": "불고기2, 된장찌개2",
-                    "subMenu": "샐러드2, 계란찜2"
-                },
-                {
-                    "mealType": "DINNER",
-                    "operatingStartTime": "17:00",
-                    "operatingEndTime": "19:00",
-                    "mainMenu": "메인메뉴1, 메인메뉴2",
-                    "subMenu": "서브메뉴1, 서브메뉴2"
-                }
- */

@@ -23,7 +23,8 @@ public class MealRequestDTO {
     @NotBlank(message = "mainMenu는 필수 값입니다.")
     private String mainMenu;
 
-    @NotBlank(message = "subMenu는 필수 값입니다.")
+    // 식당이 쉬는 날같은 상황에선 mainMenu에만 "운영하지 않습니다."를 입력하고, subMenu엔 입력할 필요가 없기 때문에 제거하는게 나을듯
+    // @NotBlank(message = "subMenu는 필수 값입니다.")
     private String subMenu;
 
     public MealType getMealTypeEnum() {

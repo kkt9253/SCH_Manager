@@ -49,4 +49,8 @@ public class Menu {
     @ManyToOne
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
+
+    @ManyToOne
+    @JoinColumn(name = "menuImage_id")
+    private MenuImage menuImage;
 }
