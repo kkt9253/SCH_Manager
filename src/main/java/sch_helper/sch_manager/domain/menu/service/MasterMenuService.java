@@ -18,9 +18,11 @@ import sch_helper.sch_manager.domain.menu.dto.base.DailyMealResponseDTO;
 import sch_helper.sch_manager.domain.menu.dto.base.MealResponseDTO;
 import sch_helper.sch_manager.domain.menu.dto.converter.MenuConverter;
 import sch_helper.sch_manager.domain.menu.entity.Menu;
+import sch_helper.sch_manager.domain.menu.entity.MenuImage;
 import sch_helper.sch_manager.domain.menu.entity.Restaurant;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
+import sch_helper.sch_manager.domain.menu.repository.MenuImageRepository;
 import sch_helper.sch_manager.domain.menu.repository.RestaurantRepository;
 
 import java.util.List;
@@ -30,11 +32,13 @@ import java.util.List;
 public class MasterMenuService {
 
     private final RestaurantRepository restaurantRepository;
+    private final MenuImageRepository menuImageRepository;
     private final MenuUtil menuUtil;
     private final FileUtil fileUtil;
 
     public ResponseEntity<?> uploadDailyMealPlans(
             String restaurantName,
+            String weekStartDate,
             DailyMealRequestDTO dailyMealRequestDTO
     ) {
 
@@ -51,9 +55,26 @@ public class MasterMenuService {
         );
         List<MealResponseDTO> MealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
 
+
+        String weekImageName = restaurantName + "-" + weekStartDate + "-week";
+        MenuImage weekMenuImage = menuImageRepository.findByImageName(weekImageName)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+
+        byte[] encodeWeekMealImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
+
+
+        String dayImageName = restaurantName + "-" + weekStartDate + "-" + dailyMealRequestDTO.getDayOfWeek();
+        MenuImage dayMenuImage = menuImageRepository.findByImageName(dayImageName)
+                .orElse(null);
+
+        byte[] encodeDayMealImage = null;
+        if (dayMenuImage != null) {
+            encodeDayMealImage = fileUtil.encodeByteToBase64(dayMenuImage.getImageBinary());
+        }
+
         PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
-                null,
-                null,
+                encodeDayMealImage,
+                encodeWeekMealImage,
                 new DailyMealResponseDTO(dailyMealRequestDTO.getDayOfWeek(), MealResponseDTOs)
         );
 
@@ -62,7 +83,6 @@ public class MasterMenuService {
                 "Daily meal plans Final approval and uploaded successfully.",
                 pendingDailyMealResponseDTO
         ));
-
     }
 
     public ResponseEntity<?> getPendingWeeklyMealPlans(PendingWeeklyMealRequestDTO pendingWeeklyMealRequestDTO) {
@@ -72,21 +92,19 @@ public class MasterMenuService {
                 MenuStatus.PENDING
         );
         if (menus.isEmpty()) {
-            throw new ApiException(ErrorCode.MENU_NOT_FOUND);
+
+            return ResponseEntity.ok(SuccessResponse.ok("식단표가 아직 업로드되지 않았습니다."));
         }
         List<DailyMealResponseDTO> DailyMealResponseDTOs = MenuConverter.getDailyMealResponseDTOsByMenus(menus);
 
+        String weekImageName = pendingWeeklyMealRequestDTO.getRestaurantName() + "-" + pendingWeeklyMealRequestDTO.getWeekStartDate().toString() + "-week";
+        MenuImage weekMenuImage = menuImageRepository.findByImageName(weekImageName)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
 
-        String restaurantName = pendingWeeklyMealRequestDTO.getRestaurantName();
-        String weekStartDate = pendingWeeklyMealRequestDTO.getWeekStartDate().toString();
+        byte[] encodeWeekMealImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
 
-        String weekFileName = restaurantName + "-" + weekStartDate + "-week.jpg";
-        String weekMealImgPath = fileUtil.getFile("weeklyMealImg", weekFileName);
-
-
-        // 이미지 경로가 아닌 이미지 보내는 걸로 수정 예정
         PendingWeeklyMealResponseDTO pendingWeeklyMealResponseDTO = new PendingWeeklyMealResponseDTO(
-                weekMealImgPath,
+                encodeWeekMealImage,
                 DailyMealResponseDTOs
         );
 
@@ -101,27 +119,31 @@ public class MasterMenuService {
                 MenuStatus.PENDING
         );
         if (menus.isEmpty()) {
-            throw new ApiException(ErrorCode.MENU_NOT_FOUND);
+            return ResponseEntity.ok(SuccessResponse.ok("식단표가 아직 업로드되지 않았습니다."));
         }
+
         List<MealResponseDTO> MealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
 
+        String dayImageName = pendingDailyMealRequestDTO.getRestaurantName() + "-" + pendingDailyMealRequestDTO.getWeekStartDate().toString() + "-" + pendingDailyMealRequestDTO.getDayOfWeek();
+        // 특정 요일 이미지는 존재하지 않을 수도 있음 (일주일 식단 업로드 시에 Menu는 저장되지만, 이때 특정 요일 이미지는 없기 때문)
+        MenuImage dayMenuImage = menuImageRepository.findByImageName(dayImageName)
+                .orElse(null);
 
-        String dayOfWeek = pendingDailyMealRequestDTO.getDayOfWeek();
-        String restaurantName = pendingDailyMealRequestDTO.getRestaurantName();
-        String weekStartDate = pendingDailyMealRequestDTO.getWeekStartDate().toString();
+        byte[] encodeDayMealImage = null;
+        if (dayMenuImage != null) {
+            encodeDayMealImage = fileUtil.encodeByteToBase64(dayMenuImage.getImageBinary());
+        }
 
-        String dayFileName = restaurantName + "-" + weekStartDate + "-day.jpg";
-        String weekFileName = restaurantName + "-" + weekStartDate + "-week.jpg";
+        String weekImageName = pendingDailyMealRequestDTO.getRestaurantName() + "-" + pendingDailyMealRequestDTO.getWeekStartDate().toString() + "-week";
+        // 일주일치 이미지는 무조건 존재해야 함
+        MenuImage weekMenuImage = menuImageRepository.findByImageName(weekImageName)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+        byte[] encodeWeekMealImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
 
-        String dayMealImgPath = fileUtil.getFile("dailyMealImg", dayFileName);
-        String weekMealImgPath = fileUtil.getFile("weeklyMealImg", weekFileName);
-
-
-        // 이미지 경로가 아닌 이미지 보내는 걸로 수정 예정
         PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
-                dayMealImgPath,
-                weekMealImgPath,
-                new DailyMealResponseDTO(dayOfWeek, MealResponseDTOs)
+                encodeDayMealImage,
+                encodeWeekMealImage,
+                new DailyMealResponseDTO(pendingDailyMealRequestDTO.getDayOfWeek(), MealResponseDTOs)
         );
 
         return ResponseEntity.ok(SuccessResponse.ok(pendingDailyMealResponseDTO));

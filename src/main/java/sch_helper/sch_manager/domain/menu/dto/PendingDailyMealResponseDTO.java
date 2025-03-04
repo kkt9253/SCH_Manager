@@ -10,8 +10,8 @@ import sch_helper.sch_manager.domain.menu.dto.base.DailyMealResponseDTO;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PendingDailyMealResponseDTO {
 
-    private String dayMealImg;
-    private String weekMealImg;
+    private byte[] dayMealImg;
+    private byte[] weekMealImg;
 
     private DailyMealResponseDTO dailyMeal;
 }

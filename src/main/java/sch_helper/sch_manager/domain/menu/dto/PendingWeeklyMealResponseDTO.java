@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PendingWeeklyMealResponseDTO {
 
-    private String weekMealImg;
+    private byte[] weekMealImg;
 
     private List<DailyMealResponseDTO> dailyMeals;
 }

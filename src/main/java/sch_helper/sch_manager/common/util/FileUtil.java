@@ -2,48 +2,28 @@ package sch_helper.sch_manager.common.util;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import sch_helper.sch_manager.common.exception.custom.ApiException;
+import sch_helper.sch_manager.common.exception.error.ErrorCode;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.Base64;
 
 @Component
 public class FileUtil {
 
-    public String saveFile(MultipartFile file, String folderName, String fileName) throws IOException {
+    public byte[] imageToByte(MultipartFile file) {
 
-        String basePath = new File("").getAbsolutePath();
-        String folderPath = basePath + File.separator + folderName;
-        File directory = new File(folderPath);
-        if (!directory.exists()) {
-            directory.mkdirs();
-            System.out.println("폴더 생성");
-        }
-
-        System.out.println("folderPath : " + folderPath);
-
-        String filePath = folderPath + File.separator + fileName;
-        File destinationFile = new File(filePath);
-        file.transferTo(destinationFile);
-
-        System.out.println("filePath: " + filePath);
-
-        return filePath;
+        byte[] bytes = null;
+        try {
+            bytes = file.getBytes();
+        } catch (IOException e) {
+            throw new ApiException(ErrorCode.TRANSFORMATION_ERROR);
+         }
+        return bytes;
     }
 
-    public String getFile(String folderName, String fileName) {
+    public byte[] encodeByteToBase64(byte[] byteFile) {
 
-        String basePath = new File("").getAbsolutePath();
-        String folderPath = basePath + File.separator + folderName;
-        String filePath = folderPath + File.separator + fileName;
-
-        File file = new File(filePath);
-
-        if (!file.exists()) {
-            System.out.println("파일이 존재하지 않습니다: " + filePath);
-            return null;
-        }
-
-        System.out.println("filePath: " + filePath);
-        return filePath;
+        return Base64.getEncoder().encode(byteFile);
     }
 }
