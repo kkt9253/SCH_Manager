@@ -39,4 +39,16 @@ public class DailyMenu {
      */
     @OneToMany(mappedBy = "dailyMenu", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Meal> mealList = new ArrayList<>();
+
+    public void changMealList(List<Meal> mealList) {
+        this.mealList = mealList;
+    }
+
+    public void changeDailyImage(byte[] dailyImage) {
+        this.dailyImage = dailyImage;
+    }
+
+    public void changerWeeklyMenu(WeeklyMenu weeklyMenu) {
+        this.weeklyMenu = weeklyMenu;
+    }
 }

@@ -1,10 +1,9 @@
 package sch_helper.sch_manager.domain.menu.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import sch_helper.sch_manager.common.exception.custom.ApiException;
 import sch_helper.sch_manager.common.exception.error.ErrorCode;
@@ -12,31 +11,44 @@ import sch_helper.sch_manager.common.response.SuccessResponse;
 import sch_helper.sch_manager.common.util.FileUtil;
 import sch_helper.sch_manager.common.util.MenuUtil;
 import sch_helper.sch_manager.domain.menu.dto.*;
-import sch_helper.sch_manager.domain.menu.dto.base.DailyMealRequestDTO;
-import sch_helper.sch_manager.domain.menu.dto.base.DailyMealResponseDTO;
-import sch_helper.sch_manager.domain.menu.dto.base.MealResponseDTO;
-import sch_helper.sch_manager.domain.menu.dto.base.RestaurantResponseDTO;
-import sch_helper.sch_manager.domain.menu.dto.converter.MenuConverter;
-import sch_helper.sch_manager.domain.menu.dto.converter.RestaurantConverter;
-import sch_helper.sch_manager.domain.menu.entity.Menu;
-import sch_helper.sch_manager.domain.menu.entity.MenuImage;
-import sch_helper.sch_manager.domain.menu.entity.Restaurant;
+import sch_helper.sch_manager.domain.menu.dto.base.*;
+import sch_helper.sch_manager.domain.menu.dto.converter.*;
+import sch_helper.sch_manager.domain.menu.entity.*;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
+import sch_helper.sch_manager.domain.menu.enums.MealType;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
-import sch_helper.sch_manager.domain.menu.repository.MenuImageRepository;
-import sch_helper.sch_manager.domain.menu.repository.RestaurantRepository;
+import sch_helper.sch_manager.domain.menu.enums.RestaurantName;
+import sch_helper.sch_manager.domain.menu.repository.*;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AdminMenuService {
 
+    // repository
     private final RestaurantRepository restaurantRepository;
-    private final FileUtil fileUtil;
-    private final MenuUtil menuUtil;
+    private final WeeklyMenuRepository weeklyMenuRepository;
+    private final DailyMenuRepository dailyMenuRepository;
+//    private final MealRepository mealRepository;
     private final MenuImageRepository menuImageRepository;
 
+    // converter
+    private final WeeklyMenuConverter weeklyMenuConverter;
+    private final DailyMenuConverter dailyMenuConverter;
+    private final MealConverter mealConverter;
+
+    // utils
+    private final FileUtil fileUtil;
+    private final MenuUtil menuUtil;
+
+    /**
+     * Refactoring 필요
+     * 수정, 저장 모두 가능하도록 변경해야함
+     * */
     @Transactional
     public ResponseEntity<?> uploadWeeklyMealPlans(
             String restaurantName,
@@ -44,111 +56,124 @@ public class AdminMenuService {
             List<DailyMealRequestDTO> dailyMealRequestDTOs,
             MultipartFile weeklyMealImg
     ) {
-
-        String imageName = restaurantName + "-" + weekStartDate + "-week";
         byte[] byteImage = fileUtil.imageToByte(weeklyMealImg);
-        byte[] encodeImage = fileUtil.encodeByteToBase64(byteImage);
+        LocalDate parsedWeekStartDate = LocalDate.parse(weekStartDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
-        MenuImage menuImage = menuImageRepository.findByImageName(imageName)
-                        .orElse(new MenuImage());
-        menuImage.setImageName(imageName);
-        menuImage.setImageBinary(byteImage);
-
-        menuImageRepository.save(menuImage);
-
-        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+        Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-        if (dailyMealRequestDTOs != null) {
-            for (DailyMealRequestDTO dailyMealRequestDTO : dailyMealRequestDTOs) {
+        Optional<WeeklyMenu> existingWeeklyMenuOpt = weeklyMenuRepository.findByRestaurantAndWeekStartDate(restaurant, parsedWeekStartDate);
 
-                menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING);
-            }
+        WeeklyMenu saved;
+        if (existingWeeklyMenuOpt.isPresent()) {
+            WeeklyMenu existingWeeklyMenu = existingWeeklyMenuOpt.get();
+            existingWeeklyMenu.setWeeklyImage(byteImage);
 
-            List<Menu> menus = menuUtil.getWeeklyMealsByMenuStatus(
-                    restaurantName,
-                    MenuStatus.PENDING
-            );
-            List<DailyMealResponseDTO> DailyMealResponseDTOs = MenuConverter.getDailyMealResponseDTOsByMenus(menus);
+            dailyMealRequestDTOs.forEach(dailyMealRequestDTO -> {
+                DayOfWeek dayOfWeek = DayOfWeek.valueOf(dailyMealRequestDTO.getDayOfWeek());
 
-            PendingWeeklyMealResponseDTO pendingWeeklyMealResponseDTO = new PendingWeeklyMealResponseDTO(
-                    encodeImage,
-                    DailyMealResponseDTOs
-            );
+                // 1. 기존 DailyMenu 찾기
+                Optional<DailyMenu> existingDailyMenuOpt = existingWeeklyMenu.getDailyMenuList().stream()
+                        .filter(dm -> dm.getDayOfWeek() == dayOfWeek)
+                        .findFirst();
 
-            return ResponseEntity.ok(SuccessResponse.of(
-                    HttpStatus.CREATED,
-                    "Weekly meal plans uploaded successfully.",
-                    pendingWeeklyMealResponseDTO
-            ));
+                if (existingDailyMenuOpt.isPresent()) {
+                    DailyMenu existingDailyMenu = existingDailyMenuOpt.get();
+                    List<Meal> existingMeals = existingDailyMenu.getMealList();
+
+                    // 2. 요청된 MealType 목록 추출
+                    Set<MealType> requestMealTypes = dailyMealRequestDTO.getMeals().stream()
+                            .map(mealDto -> MealType.valueOf(mealDto.getMealType()))
+                            .collect(Collectors.toSet());
+
+                    // 3. 기존 Meal 업데이트 또는 추가
+                    dailyMealRequestDTO.getMeals().forEach(mealDto -> {
+                        Optional<Meal> existingMealOpt = existingMeals.stream()
+                                .filter(m -> m.getMealType() == MealType.valueOf(mealDto.getMealType()))
+                                .findFirst();
+
+                        if (existingMealOpt.isPresent()) {
+                            // 3-1. 기존 Meal 업데이트
+                            Meal existingMeal = existingMealOpt.get();
+                            existingMeal.updateFromDto(mealDto); // 엔터티에 업데이트 메서드 추가
+                        } else {
+                            // 3-2. 새로운 Meal 추가
+                            Meal newMeal = mealConverter.toEntity(mealDto, existingDailyMenu);
+                            existingMeals.add(newMeal);
+                        }
+                    });
+
+                } else {
+                    // 새로운 DailyMenu 추가
+                    DailyMenu newDailyMenu = dailyMenuConverter.toEntity(dailyMealRequestDTO, existingWeeklyMenu);
+                    existingWeeklyMenu.getDailyMenuList().add(newDailyMenu);
+                    dailyMealRequestDTO.getMeals().forEach(mealDto -> {
+                        Meal meal = mealConverter.toEntity(mealDto, newDailyMenu);
+                        newDailyMenu.getMealList().add(meal);
+                    });
+                }
+            });
+
+            saved = weeklyMenuRepository.save(existingWeeklyMenu);
+        } else {
+            // 주간 식단을 처음 등록하는 경우 모든 Entity 새로 생성 후 저장
+            WeeklyMenu newWeeklyMenu = WeeklyMenu.builder()
+                    .weekStartDate(parsedWeekStartDate)
+                    .weekEndDate(parsedWeekStartDate.plusDays(5))
+                    .weeklyImage(byteImage)
+                    .restaurant(restaurant)
+                    .dailyMenuList(new ArrayList<>())
+                    .build();
+
+            dailyMealRequestDTOs.forEach(dto -> {
+                DailyMenu dailyMenu = dailyMenuConverter.toEntity(dto, newWeeklyMenu);
+                newWeeklyMenu.getDailyMenuList().add(dailyMenu);
+                dto.getMeals().forEach(mealDto -> {
+                    Meal meal = mealConverter.toEntity(mealDto, dailyMenu);
+                    dailyMenu.getMealList().add(meal);
+                });
+            });
+
+            saved = weeklyMenuRepository.save(newWeeklyMenu);
         }
 
-        return ResponseEntity.ok(SuccessResponse.of(
-                HttpStatus.CREATED,
-                "Weekly meal plans uploaded successfully.",
-                encodeImage
-        ));
+        return ResponseEntity.ok(SuccessResponse.ok(weeklyMenuConverter.toResponse(saved)));
     }
 
     @Transactional
     public ResponseEntity<?> uploadDailyMealPlans(
             String restaurantName,
-            String dayOfWeek,
             String weekStartDate,
             DailyMealRequestDTO dailyMealRequestDTO,
             MultipartFile dailyMealImg
     ) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        String imageName = restaurantName + "-" + weekStartDate + "-" + dayOfWeek;
-        byte[] byteImage = fileUtil.imageToByte(dailyMealImg);
-        byte[] encodeImage = fileUtil.encodeByteToBase64(byteImage);
-
-        MenuImage menuImage = menuImageRepository.findByImageName(imageName)
-                .orElse(new MenuImage());
-        menuImage.setImageName(imageName);
-        menuImage.setImageBinary(byteImage);
-
-        menuImageRepository.save(menuImage);
-
-        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+        Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-        if (dailyMealRequestDTO != null) {
+        WeeklyMenu weeklyMenuEntity = weeklyMenuRepository.findByRestaurantAndWeekStartDate(restaurant, LocalDate.parse(weekStartDate, dateTimeFormatter))
+                .orElseThrow(() -> new ApiException(ErrorCode.WEEKLY_MENU_NOT_FOUND));
 
-            // 특정 요일의 식단표 이미지는 연관관계 매핑 해줘야 함
-            menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING);
+        DailyMenu dailyMenu = dailyMenuRepository.findByWeeklyMenuAndDayOfWeek(weeklyMenuEntity, DayOfWeek.valueOf(dailyMealRequestDTO.getDayOfWeek()))
+                .orElseThrow(() -> new ApiException(ErrorCode.DAILY_MENU_NOT_FOUND));
 
-            List<Menu> menus = menuUtil.getDailyMealsByMenuStatus(
-                    restaurantName,
-                    DayOfWeek.valueOf(dailyMealRequestDTO.getDayOfWeek()),
-                    MenuStatus.PENDING
-            );
-            List<MealResponseDTO> MealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
+        List<Meal> existingMeals = dailyMenu.getMealList();
 
-            // 일주일치 식단표 이미지 참조
-            MenuImage weekMenuImage = menuImageRepository.findByImageName(restaurantName + "-" + weekStartDate + "-week")
-                    .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+        // 3. 기존 Meal 업데이트 또는 추가
+        dailyMealRequestDTO.getMeals().forEach(mealDto -> {
+            Optional<Meal> existingMealOpt = existingMeals.stream()
+                    .filter(m -> m.getMealType() == MealType.valueOf(mealDto.getMealType()))
+                    .findFirst();
 
-            byte[] encodeWeekImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
+            if (existingMealOpt.isPresent()) {
+                // 3-1. 기존 Meal 업데이트
+                Meal existingMeal = existingMealOpt.get();
+                existingMeal.updateFromDto(mealDto); // 엔터티에 업데이트 메서드 추가
+            }
+        });
 
-            PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
-                    encodeImage,
-                    encodeWeekImage,
-                    new DailyMealResponseDTO(dailyMealRequestDTO.getDayOfWeek(), MealResponseDTOs)
-            );
-
-            return ResponseEntity.ok(SuccessResponse.of(
-                    HttpStatus.CREATED,
-                    "Daily meal plans uploaded successfully.",
-                    pendingDailyMealResponseDTO
-            ));
-        }
-
-        return ResponseEntity.ok(SuccessResponse.of(
-                HttpStatus.CREATED,
-                "Daily meal plans uploaded successfully.",
-                encodeImage
-        ));
+        return ResponseEntity.ok(SuccessResponse.ok(dailyMenuConverter.toResponse(dailyMenu)));
     }
 
     public ResponseEntity<?> getPendingWeeklyMealPlans(PendingWeeklyMealRequestDTO pendingWeeklyMealRequestDTO) {
@@ -217,7 +242,7 @@ public class AdminMenuService {
 
     @Transactional
     public ResponseEntity<?> earlyClose(String restaurantName, EarlyCloseRequestDTO earlyCloseRequestDTO) {
-        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+        Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         restaurant.changeIsActive(!earlyCloseRequestDTO.isEarlyClose());
@@ -229,7 +254,7 @@ public class AdminMenuService {
 
     @Transactional
     public ResponseEntity<?> updateTotalOperatingTime(String restaurantName, TotalOperatingTimeRequestDTO request) {
-        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+        Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         restaurant.changeOperatingStartTime(request.getNewOperatingStartTime());

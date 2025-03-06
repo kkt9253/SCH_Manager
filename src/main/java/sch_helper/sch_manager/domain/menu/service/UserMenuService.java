@@ -34,10 +34,10 @@ public class UserMenuService {
 
         for (RestaurantName restaurant : RestaurantName.values()) {
 
-            Restaurant restaurantEntity = restaurantRepository.findByName(restaurant.name())
+            Restaurant restaurantEntity = restaurantRepository.findByName(RestaurantName.valueOf(restaurant.name()))
                     .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-            String restaurantName = restaurantEntity.getName();
+            String restaurantName = String.valueOf(restaurantEntity.getName());
             boolean isActive = restaurantEntity.isActive();
 
             List<MealResponseDTO> mealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(
@@ -59,7 +59,7 @@ public class UserMenuService {
 
     public ResponseEntity<?> getApprovedDetailMealPlans(String restaurantName) {
 
-        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+        Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         String restaurantOperatingStartTime = restaurant.getOperatingStartTime();

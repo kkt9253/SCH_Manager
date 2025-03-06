@@ -3,6 +3,7 @@ package sch_helper.sch_manager.domain.menu.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
+import sch_helper.sch_manager.domain.menu.dto.base.MealRequestDTO;
 import sch_helper.sch_manager.domain.menu.enums.MealType;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
 
@@ -46,4 +47,12 @@ public class Meal {
     @JoinColumn(name = "daily_menu_id", nullable = false)
     @Setter
     private DailyMenu dailyMenu;
+
+    public void updateFromDto(MealRequestDTO dto) {
+        this.menuStatus = MenuStatus.PENDING;
+        this.mainMenu = dto.getMainMenu();
+        this.subMenu = dto.getSubMenu();
+        this.operatingStartTime = LocalTime.parse(dto.getOperatingStartTime());
+        this.operatingEndTime = LocalTime.parse(dto.getOperatingEndTime());
+    }
 }
