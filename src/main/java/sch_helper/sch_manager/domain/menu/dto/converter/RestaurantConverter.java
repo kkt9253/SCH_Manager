@@ -13,7 +13,13 @@ import sch_helper.sch_manager.domain.menu.entity.Restaurant;
 public class RestaurantConverter {
 
     public static RestaurantResponseDTO toResponse(Restaurant restaurant) {
-        return RestaurantResponseDTO.fromEntity(restaurant);
+        return RestaurantResponseDTO.builder()
+                .restaurantName(restaurant.getName().name())
+                .operatingStartTime(restaurant.getOperatingStartTime())
+                .operatingEndTime(restaurant.getOperatingEndTime())
+                .isActive(restaurant.isActive())
+                .build();
+
     }
 
 }
