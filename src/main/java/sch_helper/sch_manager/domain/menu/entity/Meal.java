@@ -1,6 +1,7 @@
 package sch_helper.sch_manager.domain.menu.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import sch_helper.sch_manager.domain.menu.enums.MealType;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
@@ -8,6 +9,10 @@ import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
 import java.time.LocalTime;
 
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Getter
 public class Meal {
 
     @Id
@@ -38,6 +43,7 @@ public class Meal {
     private LocalTime operatingEndTime;
 
     @ManyToOne
-    @JoinColumn(name = "daily_menu_id")
+    @JoinColumn(name = "daily_menu_id", nullable = false)
+    @Setter
     private DailyMenu dailyMenu;
 }
