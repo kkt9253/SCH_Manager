@@ -12,6 +12,5 @@ public class EarlyCloseRequestDTO {
 
     // mealType 은 필요 없으므로 넣지 않음
 
-    @NotBlank
     private boolean earlyClose;
 }
