@@ -6,15 +6,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
 
 import java.util.List;
 
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class DailyMealRequestDTO {
 
     @NotBlank(message = "dayOfWeek은 필수 값입니다.")

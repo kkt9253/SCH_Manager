@@ -2,12 +2,14 @@ package sch_helper.sch_manager.domain.menu.dto.base;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import sch_helper.sch_manager.domain.menu.enums.MealType;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class MealRequestDTO {
 
     @NotBlank(message = "mealType은 필수 값입니다.")
