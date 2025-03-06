@@ -7,7 +7,7 @@ import sch_helper.sch_manager.domain.menu.entity.Menu;
 import java.util.Optional;
 
 @Repository
-public interface MenuRepository extends JpaRepository<Menu, Long>, MenuQueryDslRepository {
+public interface MenuRepository extends JpaRepository<Menu, Long> {
 
     boolean existsByUnique(String unique);
     Optional<Menu> findByUnique(String unique);
