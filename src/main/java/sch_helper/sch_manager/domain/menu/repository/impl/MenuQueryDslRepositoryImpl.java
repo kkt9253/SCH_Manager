@@ -1,3 +1,4 @@
+/*
 package sch_helper.sch_manager.domain.menu.repository.impl;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -64,4 +65,4 @@ public class MenuQueryDslRepositoryImpl implements MenuQueryDslRepository {
                 )
                 .fetch();
     }
-}
+}*/

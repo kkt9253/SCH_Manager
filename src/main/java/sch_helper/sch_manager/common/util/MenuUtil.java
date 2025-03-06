@@ -48,18 +48,20 @@ public class MenuUtil {
 
     public List<Menu> getDailyMealsByMenuStatus(String restaurantName, DayOfWeek dayOfWeek, MenuStatus menuStatus) {
 
-        return menuRepository.getDailyMealByMenuStatus(
+        /*return menuRepository.getDailyMealByMenuStatus(
                 restaurantName,
                 dayOfWeek,
                 menuStatus
-        );
+        );*/
+        return  null;
     }
 
     public List<Menu> getWeeklyMealsByMenuStatus(String restaurantName, MenuStatus menuStatus) {
 
-        return menuRepository.getWeeklyMealByMenuStatus(
+        /*return menuRepository.getWeeklyMealByMenuStatus(
                 restaurantName,
                 menuStatus
-        );
+        );*/
+        return null;
     }
 }
