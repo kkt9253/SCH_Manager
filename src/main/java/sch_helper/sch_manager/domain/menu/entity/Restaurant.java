@@ -1,6 +1,8 @@
 package sch_helper.sch_manager.domain.menu.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import sch_helper.sch_manager.domain.menu.enums.RestaurantName;
@@ -8,6 +10,8 @@ import sch_helper.sch_manager.domain.menu.enums.RestaurantName;
 @Entity
 @Getter
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Restaurant {
 
     @Id
