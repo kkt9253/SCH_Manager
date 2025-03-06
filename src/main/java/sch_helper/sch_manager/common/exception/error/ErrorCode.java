@@ -38,6 +38,8 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "N002", "해당 사용자를 찾을 수 없습니다."),
     RESTAURANT_NOT_FOUND(HttpStatus.NOT_FOUND, "N003", "해당 식당을 찾을 수 없습니다."),
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "N004", "해당 메뉴를 찾을 수 없습니다."),
+    WEEKLY_MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "N005", "해당 주간 식단을 찾을 수 없습니다."),
+    DAILY_MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "N006", "해당 일간 식단을 찾을 수 없습니다."),
 
     /** ========== 405 METHOD_NOT_ALLOWED (잘못된 HTTP 메서드) ========== **/
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "M001", "해당 HTTP 메서드는 지원되지 않습니다."),
