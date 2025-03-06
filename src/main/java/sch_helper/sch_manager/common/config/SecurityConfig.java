@@ -66,6 +66,7 @@ public class SecurityConfig {
                 .disable());
 
         http.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers( HttpMethod.POST, "/login", "/reissue").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/admin/week-meal-plans/hyangseol1").hasAnyAuthority(Role.Master.name(), Role.Admin1.name(), Role.Admin2.name())
                 .requestMatchers(HttpMethod.POST, "/api/admin/week-meal-plans/faculty").hasAnyAuthority(Role.Master.name(), Role.Admin1.name(), Role.Admin3.name())
