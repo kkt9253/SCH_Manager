@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 import sch_helper.sch_manager.common.exception.custom.ApiException;
 import sch_helper.sch_manager.common.exception.error.ErrorCode;
 import sch_helper.sch_manager.common.util.DateUtil;
-import sch_helper.sch_manager.domain.menu.controller.docs.AdminMenuControllerDocs;
 import sch_helper.sch_manager.domain.menu.dto.EarlyCloseRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingDailyMealRequestDTO;
 import sch_helper.sch_manager.domain.menu.dto.PendingWeeklyMealRequestDTO;
@@ -23,7 +22,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
-public class AdminMenuController implements AdminMenuControllerDocs {
+public class AdminMenuController {
 
     private final AdminMenuService adminMenuService;
     private final DateUtil dateUtil;
