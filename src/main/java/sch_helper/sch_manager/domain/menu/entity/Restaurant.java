@@ -3,7 +3,6 @@ package sch_helper.sch_manager.domain.menu.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import sch_helper.sch_manager.domain.menu.enums.RestaurantName;
 
 @Entity
 @Getter
@@ -15,9 +14,8 @@ public class Restaurant {
     @Column(name = "restaurant_id")
     private Long id;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "restaurant_name", nullable = false, unique = true)
-    private RestaurantName name;
+    private String name;
 
     @Column(name = "operating_start_time", nullable = false)
     private String operatingStartTime;

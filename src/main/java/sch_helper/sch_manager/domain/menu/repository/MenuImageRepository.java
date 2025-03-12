@@ -7,7 +7,7 @@ import sch_helper.sch_manager.domain.menu.entity.MenuImage;
 import java.util.Optional;
 
 @Repository
-public interface MenuImageRepository extends JpaRepository<MenuImage, Long> {
+public interface MenuImageRepository extends JpaRepository<MenuImage, String> {
 
     Optional<MenuImage> findByImageName(String imageName);
 }
