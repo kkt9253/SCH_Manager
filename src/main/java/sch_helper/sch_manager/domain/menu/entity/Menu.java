@@ -1,17 +1,20 @@
 package sch_helper.sch_manager.domain.menu.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
 import sch_helper.sch_manager.domain.menu.enums.MealType;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
+
+import java.time.LocalDate;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Menu {
 
     @Id
@@ -43,8 +46,9 @@ public class Menu {
     @Column(name = "sub_menu")
     private String subMenu;
 
-    @Column(name = "unique_key", nullable = false, unique = true)
-    private String unique;
+    @Column(name = "week_start_date", nullable = false)
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate weekStartDate;
 
     @ManyToOne
     @JoinColumn(name = "restaurant_id", nullable = false)
