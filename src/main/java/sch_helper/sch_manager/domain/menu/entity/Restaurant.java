@@ -1,12 +1,17 @@
 package sch_helper.sch_manager.domain.menu.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import sch_helper.sch_manager.domain.menu.enums.RestaurantName;
 
 @Entity
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Restaurant {
 
     @Id
@@ -15,7 +20,7 @@ public class Restaurant {
     private Long id;
 
     @Column(name = "restaurant_name", nullable = false, unique = true)
-    private String name;
+    private RestaurantName name;
 
     @Column(name = "operating_start_time", nullable = false)
     private String operatingStartTime;

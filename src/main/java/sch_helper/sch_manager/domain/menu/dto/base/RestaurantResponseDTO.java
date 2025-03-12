@@ -17,7 +17,7 @@ public class RestaurantResponseDTO {
 
     public static RestaurantResponseDTO fromEntity(Restaurant restaurant) {
         return new RestaurantResponseDTO(
-                restaurant.getName(),
+                restaurant.getName().name(),
                 restaurant.getOperatingStartTime(),
                 restaurant.getOperatingEndTime(),
                 restaurant.isActive()
