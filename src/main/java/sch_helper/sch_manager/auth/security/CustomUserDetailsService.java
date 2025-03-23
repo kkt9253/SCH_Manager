@@ -22,7 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         // 예외처리 추가
         Optional<User> userData = userRepository.findByUsername(username);
 
-        if (userData.isEmpty()) {
+        if (userData.isPresent()) {
             return new CustomUserDetails(userData.get());
         }
         return null;
