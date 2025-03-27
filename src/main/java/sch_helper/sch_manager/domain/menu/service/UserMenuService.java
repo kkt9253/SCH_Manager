@@ -18,6 +18,7 @@ import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
 import sch_helper.sch_manager.domain.menu.enums.RestaurantName;
 import sch_helper.sch_manager.domain.menu.repository.RestaurantRepository;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,28 +29,30 @@ public class UserMenuService {
     private final MenuUtil menuUtil;
     private final RestaurantRepository restaurantRepository;
 
-    public ResponseEntity<?> getApprovedTodayMealPlans(String dayOfWeek) {
+    public ResponseEntity<?> getApprovedTodayMealPlans(
+        DayOfWeek dayOfWeek, LocalDate weekStartDate
+    ) {
 
         List<ApprovedTodayMealResponseDTO> approvedTodayMealResponseDTOs = new ArrayList<>();
 
         for (RestaurantName restaurant : RestaurantName.values()) {
 
-            Restaurant restaurantEntity = restaurantRepository.findByName(restaurant.name())
+            Restaurant restaurantEntity = restaurantRepository.findByName(restaurant)
                     .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-            String restaurantName = restaurantEntity.getName();
             boolean isActive = restaurantEntity.isActive();
 
             List<MealResponseDTO> mealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(
                     menuUtil.getDailyMealsByMenuStatus(
-                            restaurantName,
-                            DayOfWeek.valueOf(dayOfWeek),
+                            RestaurantName.valueOf(restaurant.name()),
+                            weekStartDate,
+                            dayOfWeek,
                             MenuStatus.APPROVED)
             );
 
-            DailyMealResponseDTO dailyMealResponseDTO = new DailyMealResponseDTO(dayOfWeek, mealResponseDTOs);
+            DailyMealResponseDTO dailyMealResponseDTO = new DailyMealResponseDTO(dayOfWeek.name(), mealResponseDTOs);
 
-            ApprovedTodayMealResponseDTO approvedTodayMealResponseDTO = new ApprovedTodayMealResponseDTO(restaurantName, isActive, dailyMealResponseDTO);
+            ApprovedTodayMealResponseDTO approvedTodayMealResponseDTO = new ApprovedTodayMealResponseDTO(restaurant.name(), isActive, dailyMealResponseDTO);
 
             approvedTodayMealResponseDTOs.add(approvedTodayMealResponseDTO);
         }
@@ -57,7 +60,9 @@ public class UserMenuService {
         return ResponseEntity.ok(SuccessResponse.ok(approvedTodayMealResponseDTOs));
     }
 
-    public ResponseEntity<?> getApprovedDetailMealPlans(String restaurantName) {
+    public ResponseEntity<?> getApprovedDetailMealPlans(
+            RestaurantName restaurantName, LocalDate weekStartDate
+    ) {
 
         Restaurant restaurant = restaurantRepository.findByName(restaurantName)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
@@ -67,7 +72,7 @@ public class UserMenuService {
         boolean isActive = restaurant.isActive();
 
         List<DailyMealResponseDTO> dailyMealResponseDTOs = MenuConverter.getDailyMealResponseDTOsByMenus(
-                menuUtil.getWeeklyMealsByMenuStatus(restaurantName, MenuStatus.APPROVED));
+                menuUtil.getWeeklyMealsByMenuStatus(restaurantName, weekStartDate, MenuStatus.APPROVED));
 
         return ResponseEntity.ok(SuccessResponse.ok(new ApprovedDetailMealResponseDTO(
                 restaurantOperatingStartTime,

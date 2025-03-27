@@ -23,10 +23,15 @@ import sch_helper.sch_manager.domain.menu.entity.MenuImage;
 import sch_helper.sch_manager.domain.menu.entity.Restaurant;
 import sch_helper.sch_manager.domain.menu.enums.DayOfWeek;
 import sch_helper.sch_manager.domain.menu.enums.MenuStatus;
+import sch_helper.sch_manager.domain.menu.enums.RestaurantName;
 import sch_helper.sch_manager.domain.menu.repository.MenuImageRepository;
 import sch_helper.sch_manager.domain.menu.repository.RestaurantRepository;
 
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +50,9 @@ public class AdminMenuService {
             MultipartFile weeklyMealImg
     ) {
 
+        Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
+                .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
+
         String imageName = restaurantName + "-" + weekStartDate + "-week";
         byte[] byteImage = fileUtil.imageToByte(weeklyMealImg);
         byte[] encodeImage = fileUtil.encodeByteToBase64(byteImage);
@@ -56,17 +64,15 @@ public class AdminMenuService {
 
         menuImageRepository.save(menuImage);
 
-        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
-                .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
-
         if (dailyMealRequestDTOs != null) {
             for (DailyMealRequestDTO dailyMealRequestDTO : dailyMealRequestDTOs) {
 
-                menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING);
+                menuUtil.saveDailyMeal(restaurant, weekStartDate, dailyMealRequestDTO, MenuStatus.PENDING);
             }
 
             List<Menu> menus = menuUtil.getWeeklyMealsByMenuStatus(
-                    restaurantName,
+                    RestaurantName.valueOf(restaurantName),
+                    LocalDate.parse(weekStartDate),
                     MenuStatus.PENDING
             );
             List<DailyMealResponseDTO> DailyMealResponseDTOs = MenuConverter.getDailyMealResponseDTOsByMenus(menus);
@@ -83,6 +89,21 @@ public class AdminMenuService {
             ));
         }
 
+// 응답의 형태를 어떻게 하는게 좋을지. 주석: 빈 리스트 반환 코드
+//        List<DailyMealResponseDTO> emptyDailyMeals = Arrays.stream(DayOfWeek.values())
+//                .map(day -> new DailyMealResponseDTO(day.name(), Collections.emptyList()))
+//                .collect(Collectors.toList());
+//
+//        PendingWeeklyMealResponseDTO pendingWeeklyMealResponseDTO = new PendingWeeklyMealResponseDTO(
+//                encodeImage,
+//                emptyDailyMeals
+//        );
+//
+//        return ResponseEntity.ok(SuccessResponse.of(
+//                HttpStatus.CREATED,
+//                "Weekly meal plans uploaded successfully.",
+//                pendingWeeklyMealResponseDTO
+//        ));
         return ResponseEntity.ok(SuccessResponse.of(
                 HttpStatus.CREATED,
                 "Weekly meal plans uploaded successfully.",
@@ -99,6 +120,14 @@ public class AdminMenuService {
             MultipartFile dailyMealImg
     ) {
 
+        Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
+                .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        // 일주일치 식단표 이미지 참조
+        MenuImage weekMenuImage = menuImageRepository.findByImageName(restaurantName + "-" + weekStartDate + "-week")
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+        byte[] encodeWeekImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
+
         String imageName = restaurantName + "-" + weekStartDate + "-" + dayOfWeek;
         byte[] byteImage = fileUtil.imageToByte(dailyMealImg);
         byte[] encodeImage = fileUtil.encodeByteToBase64(byteImage);
@@ -110,26 +139,17 @@ public class AdminMenuService {
 
         menuImageRepository.save(menuImage);
 
-        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
-                .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
-
         if (dailyMealRequestDTO != null) {
 
-            // 특정 요일의 식단표 이미지는 연관관계 매핑 해줘야 함
-            menuUtil.saveDailyMeal(restaurant, dailyMealRequestDTO, MenuStatus.PENDING);
+            menuUtil.saveDailyMeal(restaurant, weekStartDate, dailyMealRequestDTO, MenuStatus.PENDING);
 
             List<Menu> menus = menuUtil.getDailyMealsByMenuStatus(
-                    restaurantName,
+                    RestaurantName.valueOf(restaurantName),
+                    LocalDate.parse(weekStartDate),
                     DayOfWeek.valueOf(dailyMealRequestDTO.getDayOfWeek()),
                     MenuStatus.PENDING
             );
             List<MealResponseDTO> MealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
-
-            // 일주일치 식단표 이미지 참조
-            MenuImage weekMenuImage = menuImageRepository.findByImageName(restaurantName + "-" + weekStartDate + "-week")
-                    .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
-
-            byte[] encodeWeekImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
 
             PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
                     encodeImage,
@@ -144,6 +164,19 @@ public class AdminMenuService {
             ));
         }
 
+//        DailyMealResponseDTO emptyDailyMeal = new DailyMealResponseDTO(dayOfWeek, Collections.emptyList());
+//
+//        PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
+//                encodeImage,
+//                encodeWeekImage,
+//                emptyDailyMeal
+//        );
+//
+//        return ResponseEntity.ok(SuccessResponse.of(
+//                HttpStatus.CREATED,
+//                "Daily meal plans uploaded successfully.",
+//                pendingDailyMealResponseDTO
+//        ));
         return ResponseEntity.ok(SuccessResponse.of(
                 HttpStatus.CREATED,
                 "Daily meal plans uploaded successfully.",
@@ -153,25 +186,36 @@ public class AdminMenuService {
 
     public ResponseEntity<?> getPendingWeeklyMealPlans(PendingWeeklyMealRequestDTO pendingWeeklyMealRequestDTO) {
 
-        List<Menu> menus = menuUtil.getWeeklyMealsByMenuStatus(
-                pendingWeeklyMealRequestDTO.getRestaurantName(),
-                MenuStatus.PENDING
-        );
-        if (menus.isEmpty()) {
-
-            return ResponseEntity.ok(SuccessResponse.ok("식단표가 아직 업로드되지 않았습니다."));
-        }
-        List<DailyMealResponseDTO> DailyMealResponseDTOs = MenuConverter.getDailyMealResponseDTOsByMenus(menus);
-
         String weekImageName = pendingWeeklyMealRequestDTO.getRestaurantName() + "-" + pendingWeeklyMealRequestDTO.getWeekStartDate().toString() + "-week";
         MenuImage menuImage = menuImageRepository.findByImageName(weekImageName)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
 
         byte[] weekMealImage = fileUtil.encodeByteToBase64(menuImage.getImageBinary());
 
+        List<Menu> menus = menuUtil.getWeeklyMealsByMenuStatus(
+                RestaurantName.valueOf(pendingWeeklyMealRequestDTO.getRestaurantName()),
+                pendingWeeklyMealRequestDTO.getWeekStartDate(),
+                MenuStatus.PENDING
+        );
+
+        if (menus.isEmpty()) {
+            List<DailyMealResponseDTO> emptyDailyMeals = Arrays.stream(DayOfWeek.values())
+                    .map(day -> new DailyMealResponseDTO(day.name(), Collections.emptyList()))
+                    .collect(Collectors.toList());
+
+            PendingWeeklyMealResponseDTO pendingWeeklyMealResponseDTO = new PendingWeeklyMealResponseDTO(
+                    weekMealImage,
+                    emptyDailyMeals
+            );
+
+            return ResponseEntity.ok(SuccessResponse.ok(pendingWeeklyMealResponseDTO));
+        }
+
+        List<DailyMealResponseDTO> dailyMealResponseDTOs = MenuConverter.getDailyMealResponseDTOsByMenus(menus);
+
         PendingWeeklyMealResponseDTO pendingWeeklyMealResponseDTO = new PendingWeeklyMealResponseDTO(
                 weekMealImage,
-                DailyMealResponseDTOs
+                dailyMealResponseDTOs
         );
 
         return ResponseEntity.ok(SuccessResponse.ok(pendingWeeklyMealResponseDTO));
@@ -179,16 +223,11 @@ public class AdminMenuService {
 
     public ResponseEntity<?> getPendingDailyMealPlans(PendingDailyMealRequestDTO pendingDailyMealRequestDTO) {
 
-        List<Menu> menus = menuUtil.getDailyMealsByMenuStatus(
-                pendingDailyMealRequestDTO.getRestaurantName(),
-                DayOfWeek.valueOf(pendingDailyMealRequestDTO.getDayOfWeek()),
-                MenuStatus.PENDING
-        );
-        if (menus.isEmpty()) {
-            return ResponseEntity.ok(SuccessResponse.ok("식단표가 아직 업로드되지 않았습니다."));
-        }
-
-        List<MealResponseDTO> MealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
+        String weekImageName = pendingDailyMealRequestDTO.getRestaurantName() + "-" + pendingDailyMealRequestDTO.getWeekStartDate().toString() + "-week";
+        // 일주일치 이미지는 무조건 존재해야 함
+        MenuImage weekMenuImage = menuImageRepository.findByImageName(weekImageName)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+        byte[] encodeWeekMealImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
 
         String dayImageName = pendingDailyMealRequestDTO.getRestaurantName() + "-" + pendingDailyMealRequestDTO.getWeekStartDate().toString() + "-" + pendingDailyMealRequestDTO.getDayOfWeek();
         // 특정 요일 이미지는 존재하지 않을 수도 있음 (일주일 식단 업로드 시에 Menu는 저장되지만, 이때 특정 요일 이미지는 없기 때문)
@@ -200,16 +239,32 @@ public class AdminMenuService {
             encodeDayMealImage = fileUtil.encodeByteToBase64(dayMenuImage.getImageBinary());
         }
 
-        String weekImageName = pendingDailyMealRequestDTO.getRestaurantName() + "-" + pendingDailyMealRequestDTO.getWeekStartDate().toString() + "-week";
-        // 일주일치 이미지는 무조건 존재해야 함
-        MenuImage weekMenuImage = menuImageRepository.findByImageName(weekImageName)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
-        byte[] encodeWeekMealImage = fileUtil.encodeByteToBase64(weekMenuImage.getImageBinary());
+        List<Menu> menus = menuUtil.getDailyMealsByMenuStatus(
+                RestaurantName.valueOf(pendingDailyMealRequestDTO.getRestaurantName()),
+                pendingDailyMealRequestDTO.getWeekStartDate(),
+                DayOfWeek.valueOf(pendingDailyMealRequestDTO.getDayOfWeek()),
+                MenuStatus.PENDING
+        );
+
+        if (menus.isEmpty()) {
+
+            DailyMealResponseDTO emptyDailyMeal = new DailyMealResponseDTO(pendingDailyMealRequestDTO.getDayOfWeek(), Collections.emptyList());
+
+            PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
+                    encodeDayMealImage,
+                    encodeWeekMealImage,
+                    emptyDailyMeal
+            );
+
+            return ResponseEntity.ok(SuccessResponse.ok(pendingDailyMealResponseDTO));
+        }
+
+        List<MealResponseDTO> mealResponseDTOs = MenuConverter.getMealResponseDTOsByMenus(menus);
 
         PendingDailyMealResponseDTO pendingDailyMealResponseDTO = new PendingDailyMealResponseDTO(
                 encodeDayMealImage,
                 encodeWeekMealImage,
-                new DailyMealResponseDTO(pendingDailyMealRequestDTO.getDayOfWeek(), MealResponseDTOs)
+                new DailyMealResponseDTO(pendingDailyMealRequestDTO.getDayOfWeek(), mealResponseDTOs)
         );
 
         return ResponseEntity.ok(SuccessResponse.ok(pendingDailyMealResponseDTO));
@@ -217,7 +272,7 @@ public class AdminMenuService {
 
     @Transactional
     public ResponseEntity<?> earlyClose(String restaurantName, EarlyCloseRequestDTO earlyCloseRequestDTO) {
-        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+        Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         restaurant.changeIsActive(!earlyCloseRequestDTO.isEarlyClose());
@@ -229,7 +284,7 @@ public class AdminMenuService {
 
     @Transactional
     public ResponseEntity<?> updateTotalOperatingTime(String restaurantName, TotalOperatingTimeRequestDTO request) {
-        Restaurant restaurant = restaurantRepository.findByName(restaurantName)
+        Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         restaurant.changeOperatingStartTime(request.getNewOperatingStartTime());
