@@ -275,7 +275,7 @@ public class AdminMenuService {
         Restaurant restaurant = restaurantRepository.findByName(RestaurantName.valueOf(restaurantName))
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-        restaurant.changeIsActive(!earlyCloseRequestDTO.isEarlyClose());
+        restaurant.changeIsActive(!earlyCloseRequestDTO.getEarlyClose());
         RestaurantResponseDTO response = RestaurantConverter.toResponse(restaurant);
 
 
