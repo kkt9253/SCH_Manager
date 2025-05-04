@@ -82,6 +82,8 @@ public class SecurityConfig {
                                 .requestMatchers("/api/user/**").permitAll()
                                 .requestMatchers("/api/master/**").hasAnyAuthority(Role.Master.name())
                                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                                .requestMatchers("/test/**").permitAll()
+                                .requestMatchers("/api/version").permitAll()
                                 .anyRequest().authenticated()
                 );
 

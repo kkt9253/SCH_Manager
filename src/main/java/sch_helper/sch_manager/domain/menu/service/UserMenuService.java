@@ -29,9 +29,7 @@ public class UserMenuService {
     private final MenuUtil menuUtil;
     private final RestaurantRepository restaurantRepository;
 
-    public ResponseEntity<?> getApprovedTodayMealPlans(
-        DayOfWeek dayOfWeek, LocalDate weekStartDate
-    ) {
+    public ResponseEntity<?> getApprovedTodayMealPlans(DayOfWeek dayOfWeek, LocalDate weekStartDate) {
 
         List<ApprovedTodayMealResponseDTO> approvedTodayMealResponseDTOs = new ArrayList<>();
 
@@ -60,9 +58,7 @@ public class UserMenuService {
         return ResponseEntity.ok(SuccessResponse.ok(approvedTodayMealResponseDTOs));
     }
 
-    public ResponseEntity<?> getApprovedDetailMealPlans(
-            RestaurantName restaurantName, LocalDate weekStartDate
-    ) {
+    public ResponseEntity<?> getApprovedDetailMealPlans(RestaurantName restaurantName, LocalDate weekStartDate) {
 
         Restaurant restaurant = restaurantRepository.findByName(restaurantName)
                 .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));

@@ -34,6 +34,10 @@ spring:
     user:
       name: ${SECURITY_NAME}
       password: ${SECURITY_PASSWORD}
+
+  app:
+    version: ${SECURITY_VERSION}
+
 logging:
   level:
     root: info
