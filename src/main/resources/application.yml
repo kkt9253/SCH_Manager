@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: SCH_Manager
+  profiles:
+    include: secret
+  jwt:
+    secret: ${JWT_SECRET}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
+  datasource:
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_TABLE}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+
+  servlet:
+    multipart:
+      max-request-size: 50MB
+      max-file-size: 50MB
+
+  security:
+    user:
+      name: ${SECURITY_NAME}
+      password: ${SECURITY_PASSWORD}
+
+  app:
+    version: ${SECURITY_VERSION}
+
+logging:
+  level:
+    root: info
+
+management:
+  metrics:
+    enable:
+      process: false    # ???? ??? ????
+      system: false     # ??? ??? ????
+    binder:
+      cpu: false        # CPU ??? ?? ??
