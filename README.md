@@ -4,10 +4,24 @@ SCM은 순천향대학교 학생과 교직원들에게 최신 학식 정보를 �
 
 교내 식당 메뉴를 확인하기 위해 식당에 직접 방문해야만 했던 불편함을 해소하고, 언제 어디서든 정확한 최신 식단 정보를 확인할 수 있는 편리한 환경을 제공하기 위해 개발하였습니다.
 
+## 📥 다운로드 링크
+[![Download on OneStore](https://img.shields.io/badge/OneStore-Download-red?style=for-the-badge&logo=android)](https://m.onestore.co.kr/ko-kr/apps/appsDetail.omp?prodId=0001000723)
+
 ---
 
-## 📥 다운로드 링크 
-[![Download on OneStore](https://img.shields.io/badge/OneStore-Download-red?style=for-the-badge&logo=android)](https://m.onestore.co.kr/ko-kr/apps/appsDetail.omp?prodId=0001000723)
+## 🧑‍💻 팀원
+| 이름  | 역할             |
+|-----|----------------|
+| 김경탁 | PM, Backend 팀장 |
+| 서재흔 | Frontend 팀장    |
+| 성현석 | Backend        |
+
+## 🔗 Related Links
+
+| 구분           | 기술 스택        | 저장소 링크                                                        |
+|--------------| ---------------- |---------------------------------------------------------------|
+| **Backend**  | Spring Boot      | [BE Repository Link](https://github.com/kkt9253/SCH_Manager)   |
+| **Frontend** | Android (Kotlin/Java) | [FE Repository Link](https://github.com/SeoJH27/SCM) |
 
 ---
 
@@ -40,15 +54,6 @@ SCM은 **`Admin` → `Master` → `User`** 로 이어지는 체계적인 데이�
 3.  **User (일반 사용자)**: Master가 승인한 **`APPROVED`(승인 완료)** 상태의 식단 정보만을 앱 메인 화면에서 조회하게 됩니다.
 
 이러한 3단계 워크플로우는 정보의 정확성을 보장하며, 관리자 실수로 인한 잘못된 정보 노출을 방지합니다.
-
----
-
-## 🧑‍💻 팀원
-| 이름  | 역할             |
-|-----|----------------|
-| 김경탁 | PM, Backend 팀장 |
-| 서재흔 | Frontend 팀장    |
-| 성현석 | Backend        |
 
 ---
 
